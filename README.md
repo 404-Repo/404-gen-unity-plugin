@@ -30,7 +30,7 @@ To install the package:
     - Metal on Mac
     - Vulkan on Linux
 * Make sure that **Allow unsafe code** is checked
-<img width="480" alt="install" src="https://github.com/404-Repo/404-gen-unity-plugin.git/Images/project_settings.png">
+<img width="480" alt="install" src="https://github.com/404-Repo/404-gen-unity-plugin.git/blob/main/Images/project_settings.png?raw=true">
 
 ## Usage
 ### Generating
