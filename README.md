@@ -23,7 +23,7 @@ To install the package:
 * Go to **Window > Package Manager**
 * Click the + button in the top-left corner
 * Select Add package from git URL...
-* Enter this GitHub repository's URL
+* Enter this GitHub repository's URL: https://github.com/404-Repo/404-gen-unity-plugin.git
 * Go to **Edit > Project Settings...** and go to the **Player** section
 * Make sure that the correct rendering backend is selected
     - D3D12 on Windows
