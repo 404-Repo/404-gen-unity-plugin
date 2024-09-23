@@ -24,6 +24,13 @@ To install the package:
 * Click the + button in the top-left corner
 * Select Add package from git URL...
 * Enter this GitHub repository's URL
+* Go to **Edit > Project Settings...** and go to the **Player** section
+* Make sure that the correct rendering backend is selected
+    - D3D12 on Windows
+    - Metal on Mac
+    - Vulkan on Linux
+* Make sure that **Allow unsafe code** is checked
+<img width="480" alt="install" src="https://github.com/404-Repo/404-gen-unity-plugin.git/Images/project_settings.png">
 
 ## Usage
 ### Generating
