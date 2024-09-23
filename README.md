@@ -1,4 +1,4 @@
-# Unity package for 404-GEN 3D generator running on Bittensor
+# Unity package for 404-GEN 3D Generator
 [![Discord](https://img.shields.io/discord/1065924238550237194?logo=discord&logoColor=%23FFFFFF&logoSize=auto&label=Discord&labelColor=%235865F2)](https://discord.gg/404gen)
 
 *404—GEN leverages decentralized AI to transform your words into detailed 3D models, bringing your ideas to life in just a few seconds*  
