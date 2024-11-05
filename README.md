@@ -19,26 +19,27 @@ Unity 2022.3+
 ### Instructions
 
 #### 1. Open Unity
-- From Unity Hub, create a new 3D project (Built-In Render Pipeline)
+- From Unity Hub, create a new 3D project (any pipeline)
 
 #### 2. Add the package
 * Go to **Window > Package Manager**
 * Click the **+** button in the top-left corner
-* Select Add package from git URL...
+* Select **Add package from git URL...**
 * Enter this GitHub repository's URL: `https://github.com/404-Repo/404-gen-unity-plugin.git`
   
-  <img width="480" alt="add-package" src="https://github.com/user-attachments/assets/5cacacb4-2893-4923-a333-4c1c0ca854fc">
+  <img alt="Add package from Git" src="./Documentation~/Images/PackageManager.png">
 
 #### 3. Edit Project Settings
 * Go to **Edit > Project Settings...** and go to the **Player** section
 * Make sure that the correct rendering backend is selected
-    - D3D12 on Windows
-    - Metal on Mac
-    - Vulkan on Linux
-* Make sure that **Allow 'unsafe' code** is checked
+    - **D3D12** on Windows
+    - **Metal** on Mac
+    - **Vulkan** on Linux
 
-  <img width="480" alt="install" src="https://github.com/404-Repo/404-gen-unity-plugin/blob/main/Images/project_settings.png?raw=true">
+  <img alt="Set rendering backend" src="./Documentation~/Images/ProjectSettingsGraphicsAPI.gif">
 
+* Make sure that **Allow 'unsafe' Code** is checked
+  <img alt="Enable unsafe code" src="./Documentation~/Images/EnableUnsafeCode.gif">
 ## Usage
 ### Generating
 1. Go to **Window > 404-GEN 3D Generator** to open the generation window
