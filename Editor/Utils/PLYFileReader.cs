@@ -55,7 +55,6 @@ namespace GaussianSplatting.Editor.Utils
                     attrNames.Add(tokens[2]);
                 }
             }
-            Debug.Log($"PLY {filePath} vtx {vertexCount} stride {vertexStride} attrs #{attrNames.Count} {string.Join(',', attrNames)}");
         }
 
         public static void ReadFile(string filePath, out int vertexCount, out int vertexStride, out List<string> attrNames, out NativeArray<byte> vertices)
