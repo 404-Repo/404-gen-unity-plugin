@@ -191,13 +191,13 @@ namespace GaussianSplatting.Editor
 
             m_timeLabelStyle ??= new GUIStyle(GUI.skin.label)
             {
-                fixedWidth = 120,
+                fixedWidth = 100,
                 fixedHeight = 22
             };
             
             m_logLabelStyle ??= new GUIStyle(GUI.skin.label)
             {
-                fixedWidth = 200,
+                fixedWidth = 260,
                 fixedHeight = 22
             };
 
@@ -221,6 +221,7 @@ namespace GaussianSplatting.Editor
         private Texture2D m_promptTimerIcon;
         private Texture2D m_promptTargetIcon;
         private Texture2D m_promptRetryIcon;
+        private Texture2D m_promptLogsIcon;
         
         private Texture2D m_promptPendingIcon;
         private Texture2D m_promptCompleteIcon;
@@ -240,6 +241,7 @@ namespace GaussianSplatting.Editor
             TexturesUtility.LoadTexture(ref m_promptTimerIcon, "timer.png");
             TexturesUtility.LoadTexture(ref m_promptTargetIcon, "target.png");
             TexturesUtility.LoadTexture(ref m_promptRetryIcon, "retry.png");
+            TexturesUtility.LoadTexture(ref m_promptLogsIcon, "logs.png");
             
             TexturesUtility.LoadTexture(ref m_promptPendingIcon, "pending.png");
             TexturesUtility.LoadTexture(ref m_promptCompleteIcon, "complete.png");
@@ -388,14 +390,10 @@ namespace GaussianSplatting.Editor
                 
 
                 //logs
-                if (promptEditorItem.promptStatus != PromptStatus.Completed)
-                {
-                    GUILayout.BeginVertical();
-                    string lastLog = promptEditorItem.logs.Last();
-                    GUILayout.Label(new GUIContent(lastLog, string.Join("\n", promptEditorItem.logs)), m_logLabelStyle);
-                    //prompt details END
-                    GUILayout.EndVertical();
-                }
+                GUILayout.BeginVertical();
+                GUILayout.Label(new GUIContent("LOG", m_promptLogsIcon, string.Join("\n", promptEditorItem.logs)), m_logLabelStyle);
+                //prompt details END
+                GUILayout.EndVertical();
                 
                 GUILayout.FlexibleSpace();
 
@@ -484,7 +482,7 @@ namespace GaussianSplatting.Editor
                 case PromptStatus.Started:
                     if (promptEditorItem.isActive)
                     {
-                        if (GUILayout.Button(new GUIContent(m_promptCancelIcon, "Cancel"), m_buttonStyle))
+                        if (GUILayout.Button(new GUIContent(m_promptCloseIcon, "Cancel"), m_buttonStyle))
                         {
                             promptEditorItem.isActive = false;
                             promptEditorItem.Log("Canceled by user");
@@ -771,7 +769,7 @@ namespace GaussianSplatting.Editor
             {
                 byte[] plyBytes = Convert.FromBase64String(base64Data);
                 
-                string tempPath = Path.Join(Application.dataPath.Replace("/Assets", ""), GaussianSplattingPackageSettings.Instance.GeneratedModelsPath);
+                string tempPath = Path.Combine(Application.dataPath.Replace("/Assets", ""), GaussianSplattingPackageSettings.Instance.GeneratedModelsPath);
                 if (!Directory.Exists(tempPath))
                 {
                     Directory.CreateDirectory(tempPath);

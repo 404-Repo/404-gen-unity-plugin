@@ -1,0 +1,23 @@
+﻿{
+    "name": "404.404-gen-unity-plugin",
+    "rootNamespace": "",
+    "references": [
+        "GaussianSplatting",
+        "Unity.Burst.Editor",
+        "Unity.Burst",
+        "Unity.Mathematics",
+        "Unity.Collections.Editor",
+        "Unity.Collections"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
