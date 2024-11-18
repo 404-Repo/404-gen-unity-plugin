@@ -285,7 +285,7 @@ namespace GaussianSplatting.Editor
             asset.name = baseName;
 
             var dataHash = new Hash128((uint)asset.splatCount, (uint)asset.formatVersion, 0, 0);
-            string basePath = "Assets" + Path.Combine(relativeOutputPath, baseName);
+            string basePath = "Assets" + Path.Join(relativeOutputPath, baseName);
             string pathChunk = basePath + "_chk.bytes";
             string pathPos = basePath + "_pos.bytes";
             string pathOther = basePath + "_oth.bytes";
