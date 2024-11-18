@@ -37,8 +37,8 @@ namespace GaussianSplatting.Editor
         // readonly FilePickerControl m_FilePicker = new();
 
         bool m_ImportCameras = false;
-        string m_OutputFolder = "Assets/GaussianAssets";
-        DataQuality m_Quality = DataQuality.VeryHigh;
+
+        //DataQuality m_Quality = DataQuality.VeryHigh;
         [SerializeField] GaussianSplatAsset.VectorFormat m_FormatPos;
         [SerializeField] GaussianSplatAsset.VectorFormat m_FormatScale;
         [SerializeField] GaussianSplatAsset.ColorFormat m_FormatColor;
@@ -239,18 +239,17 @@ namespace GaussianSplatting.Editor
         public unsafe GaussianSplatAsset CreateAsset(string inputFilePath)
         {
             m_ErrorMessage = null;
+            var relativeOutputPath = GaussianSplattingPackageSettings.Instance.GeneratedModelsPath + "/GaussianAssets";
+            string fullOutputPath = Application.dataPath + relativeOutputPath;
 
-            if (string.IsNullOrWhiteSpace(m_OutputFolder) || !m_OutputFolder.StartsWith("Assets/"))
+            if (!Directory.Exists(fullOutputPath))
             {
-                m_ErrorMessage = $"Output folder must be within project, was '{m_OutputFolder}'";
-                return null;
+                Directory.CreateDirectory(fullOutputPath);
             }
-            Directory.CreateDirectory(m_OutputFolder);
 
             EditorUtility.DisplayProgressBar(kProgressTitle, "Reading data files", 0.0f);
             GaussianSplatAsset.CameraInfo[] cameras = LoadJsonCamerasFile(inputFilePath, m_ImportCameras);
             using NativeArray<InputSplatData> inputSplats = LoadPLYSplatFile(inputFilePath);
-            Debug.Log($"Input Splat Length: {inputSplats.Length}");
             if (inputSplats.Length == 0)
             {
                 EditorUtility.ClearProgressBar();
@@ -286,11 +285,12 @@ namespace GaussianSplatting.Editor
             asset.name = baseName;
 
             var dataHash = new Hash128((uint)asset.splatCount, (uint)asset.formatVersion, 0, 0);
-            string pathChunk = $"{m_OutputFolder}/{baseName}_chk.bytes";
-            string pathPos = $"{m_OutputFolder}/{baseName}_pos.bytes";
-            string pathOther = $"{m_OutputFolder}/{baseName}_oth.bytes";
-            string pathCol = $"{m_OutputFolder}/{baseName}_col.bytes";
-            string pathSh = $"{m_OutputFolder}/{baseName}_shs.bytes";
+            string basePath = "Assets" + Path.Combine(relativeOutputPath, baseName);
+            string pathChunk = basePath + "_chk.bytes";
+            string pathPos = basePath + "_pos.bytes";
+            string pathOther = basePath + "_oth.bytes";
+            string pathCol = basePath + "_col.bytes";
+            string pathSh = basePath + "_shs.bytes";
             LinearizeData(inputSplats);
 
             // if we are using full lossless (FP32) data, then do not use any chunking, and keep data as-is
@@ -318,7 +318,7 @@ namespace GaussianSplatting.Editor
                 AssetDatabase.LoadAssetAtPath<TextAsset>(pathCol),
                 AssetDatabase.LoadAssetAtPath<TextAsset>(pathSh));
 
-            var assetPath = $"{m_OutputFolder}/{baseName}.asset";
+            var assetPath = $"Assets/{relativeOutputPath}/{baseName}.asset";
             var savedAsset = CreateOrReplaceAsset(asset, assetPath);
 
             EditorUtility.DisplayProgressBar(kProgressTitle, "Saving assets", 0.99f);
