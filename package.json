@@ -9,5 +9,22 @@
     "repository": "github:404-Repo/404-gen-unity-plugin",
     "unity": "2022.3",
     "unityRelease": "7f1",
-    "version": "0.1.0"
+    "version": "0.1.0",
+    "samples": [
+        {
+            "displayName": "HDRP samples",
+            "description": "Contains sample scene for the High Definition render pipeline",
+            "path": "Samples~/SamplesHDRP"
+        },
+        {
+            "displayName": "URP samples",
+            "description": "Contains sample scene for the Universal render pipeline",
+            "path": "Samples~/SamplesURP"
+        },
+        {
+            "displayName": "Standard Samples",
+            "description": "Contains sample scene for the Built-In Render pipeline",
+            "path": "Samples~/SamplesStandard"
+        }
+    ]
   }
