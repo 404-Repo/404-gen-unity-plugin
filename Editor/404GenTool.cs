@@ -484,7 +484,7 @@ namespace GaussianSplatting.Editor
                 case PromptStatus.Started:
                     if (promptEditorItem.isActive)
                     {
-                        if (GUILayout.Button(new GUIContent(m_promptCancelIcon, "Cancel"), m_buttonStyle))
+                        if (GUILayout.Button(new GUIContent(m_promptCloseIcon, "Cancel"), m_buttonStyle))
                         {
                             promptEditorItem.isActive = false;
                             promptEditorItem.Log("Canceled by user");
@@ -771,7 +771,7 @@ namespace GaussianSplatting.Editor
             {
                 byte[] plyBytes = Convert.FromBase64String(base64Data);
                 
-                string tempPath = Path.Join(Application.dataPath.Replace("/Assets", ""), GaussianSplattingPackageSettings.Instance.GeneratedModelsPath);
+                string tempPath = Path.Combine(Application.dataPath.Replace("/Assets", ""), GaussianSplattingPackageSettings.Instance.GeneratedModelsPath);
                 if (!Directory.Exists(tempPath))
                 {
                     Directory.CreateDirectory(tempPath);
