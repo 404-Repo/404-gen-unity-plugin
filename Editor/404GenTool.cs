@@ -771,7 +771,7 @@ namespace GaussianSplatting.Editor
             {
                 byte[] plyBytes = Convert.FromBase64String(base64Data);
                 
-                string tempPath = Path.Combine(Application.dataPath.Replace("/Assets", ""), GaussianSplattingPackageSettings.Instance.GeneratedModelsPath);
+                string tempPath = Path.Join(Application.dataPath.Replace("/Assets", ""), GaussianSplattingPackageSettings.Instance.GeneratedModelsPath);
                 if (!Directory.Exists(tempPath))
                 {
                     Directory.CreateDirectory(tempPath);
