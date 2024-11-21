@@ -11,6 +11,10 @@ using System.Net.WebSockets;
 using Newtonsoft.Json;
 using GaussianSplatting.Runtime;
 
+#if GS_ENABLE_HDRP
+using UnityEngine.Rendering.HighDefinition;
+#endif
+
 namespace GaussianSplatting.Editor
 {
     public class WebSocketEditorWindow : EditorWindow
@@ -51,8 +55,10 @@ namespace GaussianSplatting.Editor
                 AssetDatabase.CreateAsset(windowData, WebSocketEditorWindowData.EditorWindowDataPath);
                 AssetDatabase.SaveAssets();
             }
+
+            EditorApplication.hierarchyChanged += RenderingSetupCheck;
+            RenderingSetupCheck();
         }
-        
 
         private void OnGUI()
         {
@@ -62,7 +68,7 @@ namespace GaussianSplatting.Editor
             DrawSettings();
             DrawPromptInput();
             GUILayout.Space(20);
-            
+            DrawRenderingSetup();
             DrawPromptsTableItems();
             ProcessPromptItems();
         }
@@ -160,7 +166,6 @@ namespace GaussianSplatting.Editor
             // Initialize the GUIStyle for prompt text label
             m_promptLabelStyle ??= new GUIStyle(GUI.skin.label)
             {
-                //normal = { textColor = shockingOrangeColor },
                 fontStyle = FontStyle.Bold,
                 fontSize = 16,
                 padding = new RectOffset(0,0,0,0)
@@ -180,13 +185,11 @@ namespace GaussianSplatting.Editor
             {
                 normal = { background = darkRowTexture },
                 fixedHeight = 60,
-                //padding = new RectOffset(12, 12, 4, 8)
             };
             m_rowLightStyle ??= new GUIStyle(GUI.skin.box)
             {
                 normal = { background = lightRowTexture },
                 fixedHeight = 60,
-                //padding = new RectOffset(12, 12, 4, 8)
             };
 
             m_timeLabelStyle ??= new GUIStyle(GUI.skin.label)
@@ -322,6 +325,7 @@ namespace GaussianSplatting.Editor
             GUI.enabled = generateButtonEnabled;
             if (GUILayout.Button("Generate", m_generateButtonStyle))
             {
+                RenderingSetupCheck();
                 windowData.EnqueuePrompt(m_inputText);
                 m_inputText = "";
                 windowData.promptsScrollPosition = Vector2.zero;
@@ -658,6 +662,91 @@ namespace GaussianSplatting.Editor
             }
         }
 
+        private bool m_showRenderingSetup;
+        
+        private void RenderingSetupCheck()
+        {
+#if GS_ENABLE_HDRP
+            var effectInstance = GameObject.Find("GaussianSplatEffect");
+            if (effectInstance != null)
+            {
+                m_showRenderingSetup = false;
+                return;
+            }
+            
+            CustomPassVolume[] volumes = FindObjectsOfType<CustomPassVolume>();
+
+            
+            bool gaussianSplatHDRPPassFound = false;
+            foreach (var volume in volumes)
+            {
+                if (volume && volume.customPasses != null)
+                {
+                    if (volume.customPasses.Any(customPass => customPass is GaussianSplatHDRPPass))
+                    {
+                        gaussianSplatHDRPPassFound = true;
+                        break;
+                    }
+                }
+            }
+
+            if (gaussianSplatHDRPPassFound)
+            {
+                m_showRenderingSetup = false;
+                return;
+            }
+            
+            m_showRenderingSetup = true;
+#endif
+        }
+        
+        private void DrawRenderingSetup()
+        {
+            if (!m_showRenderingSetup) return;
+#if GS_ENABLE_URP
+            GUILayout.Label("URP");
+#elif GS_ENABLE_HDRP
+            EditorGUILayout.HelpBox(
+                    "To add Gaussian splats to the HDRP rendering process, a CustomPassVolume must be present in the scene. " +
+                    "Click here to add a preconfigured CustomPassVolume by instantiating a prefab named 'GaussianSplatEffect' from the Resources folder.",
+                    MessageType.Warning);
+
+            if (GUILayout.Button("Add HDRP custom pass"))
+            {
+                AddGaussianSplatEffect();
+            }
+#else
+            GUILayout.Label("Built in renderer");
+#endif
+        }
+        
+        private void AddGaussianSplatEffect()
+        {
+            // Load the prefab from the Resources folder
+            GameObject prefab = Resources.Load<GameObject>("GaussianSplatEffect");
+
+            if (prefab == null)
+            {
+                Debug.LogError("GaussianSplatEffect prefab not found in Resources folder. Please ensure the prefab is correctly placed in a 'Resources' folder.");
+                return;
+            }
+
+            // Instantiate the prefab into the scene
+            GameObject instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+
+            if (instance != null)
+            {
+                Undo.RegisterCreatedObjectUndo(instance, "Add Gaussian Splat Effect");
+                Selection.activeGameObject = instance;
+
+                Debug.Log("Gaussian Splat Effect added to the scene.");
+            }
+            else
+            {
+                Debug.LogError("Failed to instantiate GaussianSplatEffect prefab.");
+            }
+        }
+
         // Sends authentication data (API key) to the WebSocket server
         private async Task SendAuthData()
         {
@@ -797,6 +886,7 @@ namespace GaussianSplatting.Editor
         private void OnDestroy()
         {
             CloseWebSocket();
+            EditorApplication.hierarchyChanged -= RenderingSetupCheck;
         }
 
         private async void CloseWebSocket()
