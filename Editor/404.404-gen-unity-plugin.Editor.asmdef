@@ -1,4 +1,4 @@
-﻿{
+{
     "name": "404.404-gen-unity-plugin",
     "rootNamespace": "",
     "references": [
@@ -18,6 +18,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "",
+            "define": "GS_ENABLE_HDRP"
+        }
+    ],
     "noEngineReferences": false
 }
