@@ -3,13 +3,17 @@ using UnityEditor;
 using System;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net.WebSockets;
 using Newtonsoft.Json;
 using GaussianSplatting.Runtime;
+
+#if GS_ENABLE_URP
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+#endif
 
 #if GS_ENABLE_HDRP
 using UnityEngine.Rendering.HighDefinition;
@@ -666,6 +670,21 @@ namespace GaussianSplatting.Editor
         
         private void RenderingSetupCheck()
         {
+#if GS_ENABLE_URP
+            if (GameObject.Find("GaussianSplatURPPass") != null)
+            {
+                m_showRenderingSetup = false;
+                return;
+            }
+            
+            // Find all assets in the project of the type 'UniversalRenderPipelineAsset'
+            if (FindObjectOfType<EnqueueURPPass>() != null)
+            {
+                m_showRenderingSetup = false;
+                return;
+            }
+#endif
+
 #if GS_ENABLE_HDRP
             var effectInstance = GameObject.Find("GaussianSplatEffect");
             if (effectInstance != null)
@@ -695,16 +714,24 @@ namespace GaussianSplatting.Editor
                 m_showRenderingSetup = false;
                 return;
             }
-            
-            m_showRenderingSetup = true;
 #endif
+            m_showRenderingSetup = true;
         }
         
         private void DrawRenderingSetup()
         {
             if (!m_showRenderingSetup) return;
 #if GS_ENABLE_URP
-            GUILayout.Label("URP");
+            EditorGUILayout.HelpBox(
+                "To add Gaussian splats to the URP rendering process, a custom Render pass must enqueued when camera starts rendering the scene" +
+                "Click here to add a gameobject that enqueues custom rendering pass by instantiating a prefab named 'GaussianSplatURPPass' from the Resources folder.",
+                MessageType.Warning);
+
+            if (GUILayout.Button("Add custom rendering pass to main camera"))
+            {
+                AddCustomRenderingPassToCamera();
+            }
+            
 #elif GS_ENABLE_HDRP
             EditorGUILayout.HelpBox(
                     "To add Gaussian splats to the HDRP rendering process, a CustomPassVolume must be present in the scene. " +
@@ -715,8 +742,6 @@ namespace GaussianSplatting.Editor
             {
                 AddGaussianSplatEffect();
             }
-#else
-            GUILayout.Label("Built in renderer");
 #endif
         }
         
@@ -744,6 +769,33 @@ namespace GaussianSplatting.Editor
             else
             {
                 Debug.LogError("Failed to instantiate GaussianSplatEffect prefab.");
+            }
+        }
+        
+        private void AddCustomRenderingPassToCamera()
+        {
+            // Load the prefab from the Resources folder
+            GameObject prefab = Resources.Load<GameObject>("GaussianSplatURPPass");
+
+            if (prefab == null)
+            {
+                Debug.LogError("GaussianSplatURPPass prefab not found in Resources folder. Please ensure the prefab is correctly placed in a 'Resources' folder.");
+                return;
+            }
+
+            // Instantiate the prefab into the scene
+            GameObject instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+
+            if (instance != null)
+            {
+                Undo.RegisterCreatedObjectUndo(instance, "Add Gaussian Splat URP Pass");
+                Selection.activeGameObject = instance;
+
+                Debug.Log("GaussianSplatURPPass added to the scene.");
+            }
+            else
+            {
+                Debug.LogError("Failed to instantiate GaussianSplatURPPass prefab.");
             }
         }
 
