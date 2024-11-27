@@ -1,12 +1,15 @@
 ﻿using UnityEngine;
+#if GS_ENABLE_URP
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+#endif
 
 namespace GaussianSplatting.Runtime
 {
     [ExecuteInEditMode]
     public class EnqueueURPPass : MonoBehaviour
     {
+#if GS_ENABLE_URP
         GaussianSplatURPFeature.GSRenderPass m_Pass;
         private void OnEnable()
         {
@@ -39,5 +42,6 @@ namespace GaussianSplatting.Runtime
             RenderPipelineManager.beginCameraRendering -= OnBeginCamera;
             m_Pass?.Dispose();
         }
+#endif
     }
 }
