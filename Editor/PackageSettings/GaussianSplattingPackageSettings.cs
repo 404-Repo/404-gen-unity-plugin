@@ -10,8 +10,12 @@ namespace GaussianSplatting.Editor
         public bool LogToConsole;
         
         public string GeneratedModelsPath = "/GeneratedModels";
+
+        public bool DeleteAssociatedFilesWithPrompt = true;
+
         public bool UsePromptTimeout = true;
         public int PromptTimeoutInSeconds = 60;
+        public bool ConfirmDeletes = true;
         
         public static GaussianSplattingPackageSettings Instance
         {
