@@ -1,4 +1,4 @@
-﻿{
+{
     "name": "404.404-gen-unity-plugin",
     "rootNamespace": "",
     "references": [
@@ -7,7 +7,9 @@
         "Unity.Burst",
         "Unity.Mathematics",
         "Unity.Collections.Editor",
-        "Unity.Collections"
+        "Unity.Collections",
+        "Unity.RenderPipelines.HighDefinition.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [
         "Editor"
@@ -18,6 +20,17 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "",
+            "define": "GS_ENABLE_HDRP"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "",
+            "define": "GS_ENABLE_URP"
+        }
+    ],
     "noEngineReferences": false
 }
