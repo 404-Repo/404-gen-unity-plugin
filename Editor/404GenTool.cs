@@ -911,11 +911,11 @@ namespace GaussianSplatting.Editor
             if (!m_showRenderingSetup) return;
 #if GS_ENABLE_URP
             EditorGUILayout.HelpBox(
-                "To add Gaussian splats to the URP rendering process, a custom Render pass must enqueued when camera starts rendering the scene" +
-                "Click here to add a gameobject that enqueues custom rendering pass by instantiating a prefab named 'GaussianSplatURPPass' from the Resources folder.",
+                "To add Gaussian splats to the URP rendering process, a custom Render pass must enqueued when camera starts rendering the scene. " +
+                "\n\nClick here to add a gameobject that enqueues custom rendering pass by instantiating a prefab named 'GaussianSplatURPPass' from the Resources folder.",
                 MessageType.Warning);
 
-            if (GUILayout.Button("Add custom rendering pass to main camera"))
+            if (GUILayout.Button("Add custom rendering pass"))
             {
                 AddCustomRenderingPassToCamera();
             }
@@ -931,6 +931,7 @@ namespace GaussianSplatting.Editor
                 AddGaussianSplatEffect();
             }
 #endif
+            GUILayout.Space(20);
         }
         
         private void AddGaussianSplatEffect()
