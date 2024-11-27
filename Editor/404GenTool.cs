@@ -807,12 +807,6 @@ namespace GaussianSplatting.Editor
             var activePrompt = windowData.GetActivePrompt();
             if (activePrompt != null)
             {
-                return;
-            }
-
-            var promptItem = windowData.GetUnprocessedPromptEditorItem();
-            if (promptItem == null)
-            {
                 if (activePrompt.HasTimedOut())
                 {
                     activePrompt.isActive = false;
@@ -820,6 +814,12 @@ namespace GaussianSplatting.Editor
                     activePrompt.promptStatus = PromptStatus.Canceled;
                     CloseWebSocket();
                 }
+                return;
+            }
+
+            var promptItem = windowData.GetUnprocessedPromptEditorItem();
+            if (promptItem == null)
+            {
                 return;
             }
 
