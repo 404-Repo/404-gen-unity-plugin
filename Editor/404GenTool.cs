@@ -30,8 +30,7 @@ namespace GaussianSplatting.Editor
         public static void ShowWindow()
         {
             WebSocketEditorWindow window = GetWindow<WebSocketEditorWindow>("404-GEN 3D Generator");
-            window.minSize = new Vector2(280, 360);
-            window.maxSize = new Vector2(680, 720);
+            window.minSize = new Vector2(320, 360);
         }
         private void OnEnable()
         {
@@ -58,36 +57,70 @@ namespace GaussianSplatting.Editor
         {
             InitializeGUI();
             GUILayout.Space(20);
+            
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            
+            GUILayout.BeginVertical(GUILayout.MaxWidth(m_inputAreaWidth));
             DrawTitle();
+            GUILayout.Space(20);
             DrawSettings();
             DrawPromptInput();
+            GUILayout.EndVertical();
+            
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            
             GUILayout.Space(20);
             
             DrawPromptsTableItems();
+        }
+
+        private void Update()
+        {
             ProcessPromptItems();
         }
 
         private void InitializeGUI()
         {
+            InitializeColors();
             InitializeGUIStyles();
             InitializeImages();
+        }
+
+        private Color m_positiveColor;
+        private Color m_negativeColor;
+        private Color m_neutralColor;
+
+        private void InitializeColors()
+        {
+            m_neutralColor = new Color(0.84f, 0.84f, 0.2f);
+            m_positiveColor = new Color(0.2f, 0.75f, 0.2f);
+            m_negativeColor = new Color(1f, 0.36f, 0.32f); 
         }
 
         private GUIStyle m_promptTextAreaStyle;
         private GUIStyle m_generateButtonStyle;
         private GUIStyle m_settingsButtonStyle;
         
+        private GUIStyle m_scrollViewStyle;
         private GUIStyle m_tableStyle;
-        private GUIStyle m_buttonStyle;
-        private GUIStyle m_statusLabelStyle;
+        
         private GUIStyle m_statusIconStyle;
-        private GUIStyle m_rowDetailsStyle;
+        private GUIStyle m_statusIconTinyStyle;
         private GUIStyle m_promptLabelStyle;
+        
+        private GUIStyle m_promptDetailsRowStyle;
+        private GUIStyle m_statusLabelStyle;
+        private GUIStyle m_actionIconStyle;
+        private GUIStyle m_rowDetailsStyle;
+        
         private GUIStyle m_rowDarkStyle;
         private GUIStyle m_rowLightStyle;
         private GUIStyle m_timeLabelStyle;
         private GUIStyle m_logLabelStyle;
         private GUIStyle m_deleteStyle;
+        private GUIStyle m_deleteTinyStyle;
         
         private void InitializeGUIStyles()
         {
@@ -97,21 +130,22 @@ namespace GaussianSplatting.Editor
             var darkRowTexture = TexturesUtility.CreateColoredTexture(new Color(0.25f, 0.25f, 0.25f ));
             var lightRowTexture = TexturesUtility.CreateColoredTexture(new Color(0.3f, 0.3f, 0.3f ));
             
-            // Initialize the GUIStyle for prompt input field
             m_promptTextAreaStyle ??= new GUIStyle(GUI.skin.textArea)
             {
                 fontSize = 16,
                 fontStyle = FontStyle.Bold,
                 richText = true,
                 padding = new RectOffset(10, 10, 10, 10),
-                wordWrap = true
+                wordWrap = true,
+                normal = {textColor = shockingOrangeColor},
+                active = {textColor = shockingOrangeColor},
+                focused = {textColor = shockingOrangeColor}
             };
             
-            // Initialize the GUIStyle for Generate button
             m_generateButtonStyle ??= new GUIStyle(GUI.skin.button)
             {
                 fontSize = 18, // Set font size
-                padding = new RectOffset(10, 10, 2, 2), // Set padding
+                padding = new RectOffset(10, 10, 2, 2),
                 normal = { textColor = Color.white, background = shockingOrangeTexture },
                 fontStyle = FontStyle.Bold,
                 fixedHeight = 24,
@@ -120,53 +154,80 @@ namespace GaussianSplatting.Editor
 
             m_settingsButtonStyle ??= new GUIStyle(GUIStyle.none)
             {
-                fixedWidth = 22,
-                fixedHeight = 22,
-                normal =
-                {
-                    textColor = Color.grey
-                }
+                fixedWidth = 24,
+                fixedHeight = 24
+            };
+            
+            m_scrollViewStyle ??= new GUIStyle(GUI.skin.box)
+            {
+                stretchWidth = true,
             };
             
             m_tableStyle ??= new GUIStyle(GUI.skin.box)
             {
-                normal =
-                {
-                    background = tableBackgroundTexture
-                },
-                fixedWidth = 680,
+                normal = { background = tableBackgroundTexture },
+                stretchWidth = true,
                 margin = new RectOffset(0,0,0,0),
             };
 
-            // initialize the GUIStyle for buttons without button border
-            m_buttonStyle ??= new GUIStyle(GUIStyle.none)
+            m_actionIconStyle ??= new GUIStyle
             {
                 fixedWidth = 22,
                 fixedHeight = 22
             };
             
-            m_statusIconStyle ??= new GUIStyle(GUIStyle.none)
+            m_rowDarkStyle ??= new GUIStyle
             {
-                fixedWidth = 28,
-                fixedHeight = 48,
-                alignment = TextAnchor.MiddleCenter
+                normal = { background = darkRowTexture },
+                fixedHeight = 60,
+                margin = new RectOffset(0,0,2,2),
             };
-
-            m_rowDetailsStyle ??= new GUIStyle(GUIStyle.none)
+            m_rowLightStyle ??= new GUIStyle
             {
-                padding = new RectOffset(12, 12, 4, 0),
+                normal = { background = lightRowTexture },
+                fixedHeight = 60,
+                margin = new RectOffset(0,0,2,2),
             };
             
-            // Initialize the GUIStyle for prompt text label
-            m_promptLabelStyle ??= new GUIStyle(GUI.skin.label)
+            m_statusIconStyle ??= new GUIStyle
+            {
+                fixedWidth = 32,
+                fixedHeight = 32,
+                margin = new RectOffset(14,14,14,14),
+                alignment = TextAnchor.MiddleCenter
+            };
+            
+            m_statusIconTinyStyle ??= new GUIStyle
+            {
+                fixedWidth = 22,
+                fixedHeight = 22,
+                padding = new RectOffset(0,0,0,0),
+                margin = new RectOffset(0,12,0,0),
+                alignment = TextAnchor.MiddleCenter,
+            };
+            
+            m_rowDetailsStyle ??= new GUIStyle
+            {
+                margin = new RectOffset(12, 12, 8, 2)
+            };
+            
+            m_promptLabelStyle ??= new GUIStyle
             {
                 //normal = { textColor = shockingOrangeColor },
                 fontStyle = FontStyle.Bold,
                 fontSize = 16,
-                padding = new RectOffset(0,0,0,0)
-            };       
+                wordWrap = false,
+                fixedHeight = 20,
+                clipping = TextClipping.Clip,
+                normal = {textColor = shockingOrangeColor},
+                margin = new RectOffset(0,0,0,8)
+            };
             
-            // Initialize the GUIStyle for prompt status label
+            m_promptDetailsRowStyle ??= new GUIStyle
+            {
+                padding = new RectOffset(12,0,0,6),
+            };
+            
             m_statusLabelStyle ??= new GUIStyle(GUI.skin.label)
             {
                 fontSize = 14,
@@ -174,38 +235,33 @@ namespace GaussianSplatting.Editor
                 richText = true,
                 fixedWidth = 100
             };
+            
 
-
-            m_rowDarkStyle ??= new GUIStyle(GUI.skin.box)
-            {
-                normal = { background = darkRowTexture },
-                fixedHeight = 60,
-                //padding = new RectOffset(12, 12, 4, 8)
-            };
-            m_rowLightStyle ??= new GUIStyle(GUI.skin.box)
-            {
-                normal = { background = lightRowTexture },
-                fixedHeight = 60,
-                //padding = new RectOffset(12, 12, 4, 8)
-            };
-
-            m_timeLabelStyle ??= new GUIStyle(GUI.skin.label)
+            m_timeLabelStyle ??= new GUIStyle
             {
                 fixedWidth = 100,
-                fixedHeight = 22
+                fixedHeight = 22,
+                normal = {textColor = Color.white}
             };
             
-            m_logLabelStyle ??= new GUIStyle(GUI.skin.label)
+            m_logLabelStyle ??= new GUIStyle
             {
-                fixedWidth = 260,
-                fixedHeight = 22
+                fixedWidth = 60,
+                fixedHeight = 22,
+                normal = {textColor = Color.white}
             };
 
             m_deleteStyle ??= new GUIStyle(GUIStyle.none)
             {
+                fixedWidth = 24,
+                fixedHeight = 24,
+                margin = new RectOffset(18,18,18,18),
+            };
+            m_deleteTinyStyle ??= new GUIStyle(GUIStyle.none)
+            {
                 fixedWidth = 22,
-                fixedHeight = 48,
-                alignment = TextAnchor.MiddleCenter
+                fixedHeight = 22,
+                margin = new RectOffset(12,0,0,0),
             };
         }
         
@@ -266,24 +322,16 @@ namespace GaussianSplatting.Editor
             }
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
-            
-            GUILayout.Space(20);
         }
 
         private void DrawSettings()
         {
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            
-            GUILayout.BeginHorizontal(GUILayout.Width(m_inputAreaWidth));
-            GUILayout.FlexibleSpace();
             if (GUILayout.Button(new GUIContent(m_settingsIcon, "Settings"), m_settingsButtonStyle))
             {
                 SettingsService.OpenProjectSettings(GaussianSplattingPackageSettingsProvider.SettingsPath);
             }
-            GUILayout.EndHorizontal();
-
-            GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
         }
 
@@ -294,7 +342,6 @@ namespace GaussianSplatting.Editor
             GUILayout.BeginVertical();
             
             // center aligned prompt description
-            
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             GUILayout.Label("What would you like to generate?", EditorStyles.boldLabel);
@@ -305,12 +352,9 @@ namespace GaussianSplatting.Editor
             
             // text input field for entering prompt
             GUILayout.BeginHorizontal();
-            GUILayout.Space(12);
-            GUILayout.FlexibleSpace(); //center align
-            m_inputAreaHeight = m_promptTextAreaStyle.CalcHeight(new GUIContent(m_inputText), m_inputAreaWidth - 20); //todo get padding from styling padding
-            m_inputText = EditorGUILayout.TextArea(m_inputText, m_promptTextAreaStyle, GUILayout.Width(m_inputAreaWidth), GUILayout.Height(m_inputAreaHeight));
-            GUILayout.FlexibleSpace(); //center align
-            GUILayout.Space(12);
+            var inputFieldWidth = Math.Min(m_inputAreaWidth, position.width) - 20;
+            m_inputAreaHeight = m_promptTextAreaStyle.CalcHeight(new GUIContent(m_inputText), inputFieldWidth);
+            m_inputText = EditorGUILayout.TextArea(m_inputText, m_promptTextAreaStyle, GUILayout.MaxHeight(m_inputAreaHeight));
             GUILayout.EndHorizontal();
             
             GUILayout.Space(4);
@@ -337,9 +381,13 @@ namespace GaussianSplatting.Editor
 
         private void DrawPromptsTableItems()
         {
-            GUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-            windowData.promptsScrollPosition = GUILayout.BeginScrollView(windowData.promptsScrollPosition, false, false);
+            var tinyLayout = position.width < 460;
+            m_logLabelStyle.imagePosition = tinyLayout ? ImagePosition.ImageOnly : ImagePosition.ImageLeft;
+            m_logLabelStyle.fixedWidth = tinyLayout ? 22 : 60;
+            m_timeLabelStyle.imagePosition = tinyLayout ? ImagePosition.ImageOnly : ImagePosition.ImageLeft;
+            m_timeLabelStyle.fixedWidth = tinyLayout ? 22 : 100;
+            
+            windowData.promptsScrollPosition = GUILayout.BeginScrollView(windowData.promptsScrollPosition, false, false,  GUILayout.MaxWidth(position.width));
             
             var promptItems = windowData.GetPromptItems();
             promptItems.Reverse();
@@ -348,128 +396,175 @@ namespace GaussianSplatting.Editor
             for (var i = 0; i < promptItems.Count; i++)
             {
                 var promptEditorItem = promptItems[i];
+                
                 GUILayout.BeginHorizontal(i % 2 == 0 ? m_rowLightStyle : m_rowDarkStyle);
                 
                 //status icon
-                GUILayout.BeginVertical();
-                GUILayout.FlexibleSpace();
-                DrawStatusIcon(promptEditorItem.promptStatus);
-                GUILayout.FlexibleSpace();
-                GUILayout.EndVertical();
+                if (!tinyLayout)
+                {
+                    DrawStatusIcon(promptEditorItem.promptStatus, false);
+                }
 
                 //center area
                 GUILayout.BeginVertical(m_rowDetailsStyle);
-                //prompt
-                GUILayout.BeginHorizontal();
-                if (GUILayout.Button(new GUIContent(promptEditorItem.prompt), m_promptLabelStyle))
-                {
-                    m_inputText = promptEditorItem.prompt;
-                }
-                //GUILayout.FlexibleSpace();
 
-                GUILayout.EndHorizontal();
+                DrawPromptRow(promptEditorItem, tinyLayout);
+                DrawPromptsDetailRow(promptEditorItem, tinyLayout);
 
-                GUILayout.Space(4);
-                
-                //prompt details START
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Space(8);
-
-                //status
-                GUILayout.BeginHorizontal(GUILayout.Width(160));
-                DrawStatus(promptEditorItem);
-                GUILayout.Space(20);
-                DrawActions(promptEditorItem);
-                GUILayout.EndHorizontal();
-                GUILayout.Space(20);
-                //GUILayout.Space(200);
-
-                //time
-                DrawTime(promptEditorItem);
-                
-
-                //logs
-                GUILayout.BeginVertical();
-                GUILayout.Label(new GUIContent("LOG", m_promptLogsIcon, string.Join("\n", promptEditorItem.logs)), m_logLabelStyle);
-                //prompt details END
-                GUILayout.EndVertical();
-                
-                GUILayout.FlexibleSpace();
-
-                //end center area
-                GUILayout.EndHorizontal();
-
-                //end of central details section
                 GUILayout.EndVertical(); 
                 
                 //delete button
-                GUILayout.BeginVertical();
-                DrawDelete(promptEditorItem);
-                GUILayout.EndVertical();
+                if (!tinyLayout)
+                {
+                    DrawDelete(promptEditorItem, false);
+                }
                 
-                GUILayout.Space(12);
                 //end of row
                 GUILayout.EndHorizontal();
             }
 
             GUILayout.EndVertical();
             GUILayout.EndScrollView();
+        }
+
+        private void DrawPromptRow(PromptEditorItem promptEditorItem, bool tinyLayout)
+        {
+            var prompt = promptEditorItem.prompt;
+            GUILayout.BeginHorizontal();
             
-            GUILayout.FlexibleSpace();
+            // Get the available width
+            float availableWidth = position.width - (tinyLayout ? 40 : 140);
+            
+            var content = new GUIContent(prompt, prompt);
+            var labelSize = m_promptLabelStyle.CalcSize(content);
+            
+            if (labelSize.x > availableWidth)
+            {
+                // Start truncating the text and adding ellipsis
+                string ellipsis = "...";
+                
+                // Ensure we have space for the ellipsis
+                for (int i = prompt.Length - 1; i >= 0; i--)
+                {
+                    string truncatedText = prompt.Substring(0, i) + ellipsis;
+                    float truncatedWidth = m_promptLabelStyle.CalcSize(new GUIContent(truncatedText)).x;
+
+                    if (truncatedWidth <= availableWidth)
+                    {
+                        content = new GUIContent(truncatedText, prompt);
+                        break;
+                    }
+                }
+            }
+                
+            if (GUILayout.Button(content, m_promptLabelStyle, GUILayout.MaxWidth(120), GUILayout.ExpandWidth(true)))
+            {
+                m_inputText = promptEditorItem.prompt;
+            }
+
+            
             GUILayout.EndHorizontal();
         }
 
-        private void DrawStatusIcon(PromptStatus promptStatus)
+        private void DrawStatusIcon(PromptStatus promptStatus, bool tinyLayout)
         {
+            GUIStyle style = tinyLayout ? m_statusIconTinyStyle : m_statusIconStyle;
+            Texture2D icon = null;
+            var initialGUIColor = GUI.color;
+            Color iconColor;
+            
             switch (promptStatus)
             {
                 case PromptStatus.Sent:
                 case PromptStatus.Started:
-                    GUILayout.Label(m_promptPendingIcon, m_statusIconStyle);
+                    iconColor = m_neutralColor;
+                    icon = m_promptPendingIcon;
                     break;
                 case PromptStatus.Completed:
-                    GUI.color = Color.green;
-                    GUILayout.Label(m_promptCompleteIcon, m_statusIconStyle);
+                    iconColor = m_positiveColor;
+                    icon = m_promptCompleteIcon;
                     break;
                 case PromptStatus.Failed:
-                    GUI.color = Color.red;
-                    GUILayout.Label(m_promptFailedIcon, m_statusIconStyle);
+                    iconColor = m_negativeColor; 
+                    icon = m_promptFailedIcon;
                     break;
                 case PromptStatus.Canceled:
-                    GUI.color = Color.red;
-                    GUILayout.Label(m_promptCancelIcon,  m_statusIconStyle);
+                    iconColor = m_negativeColor;
+                    icon = m_promptCancelIcon;
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(promptStatus), promptStatus, null);
             }
-            GUI.color = Color.white;
+
+            GUI.color = iconColor;
+            if (icon != null)
+            {
+                GUILayout.Label(new GUIContent(icon, promptStatus.ToString()), style);
+            }
+
+            GUI.color = initialGUIColor;
         }
 
+        private void DrawPromptsDetailRow(PromptEditorItem promptEditorItem, bool tinyLayout)
+        {
+            //start prompt details row
+            GUILayout.BeginHorizontal(m_promptDetailsRowStyle);
+
+            if (tinyLayout)
+            {
+                DrawStatusIcon(promptEditorItem.promptStatus, true);
+            }
+                
+            //status
+            if (!tinyLayout)
+            {
+                DrawStatus(promptEditorItem);
+            }
+                
+            //actions
+            DrawActions(promptEditorItem);
+                
+            //time
+            DrawTime(promptEditorItem);
+                
+            //log
+            GUILayout.Label(new GUIContent("LOG", m_promptLogsIcon, string.Join("\n", promptEditorItem.logs)), m_logLabelStyle);
+            
+            if (tinyLayout)
+            {
+                DrawDelete(promptEditorItem, true);
+            }
+            
+            //end prompt details row
+            GUILayout.EndHorizontal();
+        }
+       
         private void DrawStatus(PromptEditorItem promptEditorItem)
         {
             string label = promptEditorItem.promptStatus.ToString().ToUpper();
-
+            var initialColor = GUI.color;
             switch (promptEditorItem.promptStatus)
             {
                 case PromptStatus.Sent:
                 case PromptStatus.Started:
-                    GUI.color = Color.yellow;
+                    GUI.color = m_neutralColor;
                     GUILayout.Label(label, m_statusLabelStyle);
                     break;
                 case PromptStatus.Completed:
-                    GUI.color = Color.green;
+                    GUI.color = m_positiveColor;
                     GUILayout.Label(label, m_statusLabelStyle);
                     
                     break;
                 case PromptStatus.Failed:
-                    GUI.color = Color.red;
+                    GUI.color = m_negativeColor;
                     GUILayout.Label(label, m_statusLabelStyle);
                     break;
                 case PromptStatus.Canceled:
-                    GUI.color = Color.red;
+                    GUI.color = m_negativeColor;
                     GUILayout.Label(label, m_statusLabelStyle);
                     break;
             }
-            GUI.color = Color.white;
+            GUI.color = initialColor;
         }
 
         private void DrawActions(PromptEditorItem promptEditorItem)
@@ -482,7 +577,7 @@ namespace GaussianSplatting.Editor
                 case PromptStatus.Started:
                     if (promptEditorItem.isActive)
                     {
-                        if (GUILayout.Button(new GUIContent(m_promptCloseIcon, "Cancel"), m_buttonStyle))
+                        if (GUILayout.Button(new GUIContent(m_promptCloseIcon, "Cancel"), m_actionIconStyle))
                         {
                             promptEditorItem.isActive = false;
                             promptEditorItem.Log("Canceled by user");
@@ -495,7 +590,7 @@ namespace GaussianSplatting.Editor
                 
                 case PromptStatus.Failed:
                 case PromptStatus.Canceled:
-                    if (GUILayout.Button(new GUIContent(m_promptRetryIcon, "Retry"), m_buttonStyle))
+                    if (GUILayout.Button(new GUIContent(m_promptRetryIcon, "Retry"), m_actionIconStyle))
                     {
                         promptEditorItem.promptStatus = PromptStatus.Sent;
                         promptEditorItem.isActive = false;
@@ -510,13 +605,13 @@ namespace GaussianSplatting.Editor
                         if (GUILayout.Button(promptEditorItem.gameobject.activeSelf ? 
                                     new GUIContent(m_promptVisibleIcon, "Hide")
                                     : new GUIContent(m_promptHiddenIcon, "Show"),
-                                m_buttonStyle))
+                                m_actionIconStyle))
                         {
                             promptEditorItem.gameobject.SetActive(!promptEditorItem.gameobject.activeSelf);
                         }
                         GUILayout.Space(4);
                         if (GUILayout.Button(new GUIContent(m_promptTargetIcon, "Focus Scene view"),
-                                m_buttonStyle))
+                                m_actionIconStyle))
                         {
                             Selection.activeGameObject = promptEditorItem.gameobject;
                             //SceneView.lastActiveSceneView.FrameSelected();
@@ -589,9 +684,10 @@ namespace GaussianSplatting.Editor
             }
         }
 
-        private void DrawDelete(PromptEditorItem promptEditorItem)
+        private void DrawDelete(PromptEditorItem promptEditorItem, bool tinyLayout)
         {
-            if (GUILayout.Button(new GUIContent(m_promptDeleteIcon, "Delete"), m_deleteStyle))
+            if (GUILayout.Button(new GUIContent(m_promptDeleteIcon, "Delete"),
+                    tinyLayout ? m_deleteTinyStyle : m_deleteStyle))
             {
                 promptEditorItem.deleted = true;
                 if (promptEditorItem.gameobject != null)
@@ -601,7 +697,7 @@ namespace GaussianSplatting.Editor
 
                 promptEditorItem.gameobject = null;
                 promptEditorItem.renderer = null;
-                
+
                 promptEditorItem.isActive = false;
                 if (promptEditorItem.isActive)
                 {
