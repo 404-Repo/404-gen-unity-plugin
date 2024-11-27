@@ -53,6 +53,10 @@ namespace GaussianSplatting.Editor
                     GUILayout.Space(8);
                     //setting for logging to Console
                     settings.LogToConsole = EditorGUILayout.ToggleLeft("Send logs to Console window", settings.LogToConsole);
+                    settings.DeleteAssociatedFilesWithPrompt = EditorGUILayout.ToggleLeft(
+                        "Deleting prompt also deletes associated generated files",
+                        settings.DeleteAssociatedFilesWithPrompt);
+
                     
                     if (GUI.changed)
                     {

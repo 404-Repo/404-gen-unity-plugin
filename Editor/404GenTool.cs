@@ -624,9 +624,22 @@ namespace GaussianSplatting.Editor
         {
             windowData.ClearDeletedItems();
             
-            var hasActivePrompt = windowData.HasActivePrompt();
-            if (hasActivePrompt)
+            var activePrompt = windowData.GetActivePrompt();
+            if (activePrompt != null)
             {
+                return;
+            }
+
+            var promptItem = windowData.GetUnprocessedPromptEditorItem();
+            if (promptItem == null)
+            {
+                if (activePrompt.HasTimedOut())
+                {
+                    activePrompt.isActive = false;
+                    activePrompt.Log("Prompt timed out");
+                    activePrompt.promptStatus = PromptStatus.Canceled;
+                    CloseWebSocket();
+                }
                 return;
             }
 

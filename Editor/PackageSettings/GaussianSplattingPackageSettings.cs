@@ -10,6 +10,8 @@ namespace GaussianSplatting.Editor
         public bool LogToConsole;
         
         public string GeneratedModelsPath = "/GeneratedModels";
+        public bool UsePromptTimeout = true;
+        public int PromptTimeoutInSeconds = 60;
         
         public static GaussianSplattingPackageSettings Instance
         {
