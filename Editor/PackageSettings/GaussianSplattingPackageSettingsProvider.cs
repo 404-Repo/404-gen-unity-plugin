@@ -59,7 +59,7 @@ namespace GaussianSplatting.Editor
                         settings.DeleteAssociatedFilesWithPrompt);
 
                     settings.UsePromptTimeout = EditorGUILayout.BeginToggleGroup("Auto-cancel Prompts that Timeout", settings.UsePromptTimeout);
-                    settings.PromptTimeoutInSeconds = EditorGUILayout.IntSlider("Timeout threshold (seconds)", settings.PromptTimeoutInSeconds, 30, 90);
+                    settings.PromptTimeoutInSeconds = EditorGUILayout.IntSlider("Timeout threshold (sec)", settings.PromptTimeoutInSeconds, 30, 90, GUILayout.MaxWidth(400));
                     EditorGUILayout.EndToggleGroup();
                     
                     if (GUI.changed)
