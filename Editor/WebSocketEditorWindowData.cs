@@ -92,6 +92,11 @@ namespace GaussianSplatting.Editor
                    GaussianSplattingPackageSettings.Instance.PromptTimeoutInSeconds;
         }
 
+        public void ResetStartTime()
+        {
+            startTime = DateTime.Now;
+            time = DateTime.Now.ToString(CultureInfo.InvariantCulture);
+        }
     }
 
     [Serializable]
