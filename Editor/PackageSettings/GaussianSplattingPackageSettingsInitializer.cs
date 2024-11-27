@@ -1,14 +1,15 @@
 ﻿using System.IO;
+using UnityEngine;
 using UnityEditor;
 
 namespace GaussianSplatting.Editor
 {
-    public static class GaussianSplattingPackageSettingsInitializer
+    public class GaussianSplattingPackageSettingsInitializer : AssetPostprocessor
     {
         private const string PackageSettingsAssetPath = "Assets/Resources/GaussianSplattingPackageSettings.asset";
 
-        [InitializeOnLoadMethod]
-        private static void Initialize()
+        private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets,
+            string[] movedAssets, string[] movedFromAssetPaths)
         {
             var settings = GaussianSplattingPackageSettings.Instance;
             if (!AssetDatabase.Contains(settings))
@@ -18,8 +19,11 @@ namespace GaussianSplatting.Editor
                 {
                     if (directoryPath != null) Directory.CreateDirectory(directoryPath);
                 }
+
                 AssetDatabase.CreateAsset(settings, PackageSettingsAssetPath);
                 AssetDatabase.SaveAssets();
+                
+                Debug.Log("Gaussian splatting Package Settings Asset has been created for you in Resources folder. If you want to modify it, go to Project Settings > 404-GEN 3D Generator");
             }
         }
     }

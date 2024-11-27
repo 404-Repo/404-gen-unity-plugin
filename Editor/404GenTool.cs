@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Net.WebSockets;
 using Newtonsoft.Json;
 using GaussianSplatting.Runtime;
+using Object = UnityEngine.Object;
 
 namespace GaussianSplatting.Editor
 {
@@ -500,6 +501,7 @@ namespace GaussianSplatting.Editor
                         promptEditorItem.promptStatus = PromptStatus.Sent;
                         promptEditorItem.isActive = false;
                         promptEditorItem.isStarted = false;
+                        promptEditorItem.ResetStartTime();
                     }
                     break;
                 
@@ -534,14 +536,19 @@ namespace GaussianSplatting.Editor
 
         private void DrawTime(PromptEditorItem promptEditorItem)
         {
-            var elapsedTimeLabel = GetElapsedTimeLabel(promptEditorItem.time);
+            var elapsedTimeLabel = GetElapsedTimeLabel(promptEditorItem);
             GUILayout.Label(new GUIContent(elapsedTimeLabel, m_promptTimerIcon, promptEditorItem.time), m_timeLabelStyle);
         }
 
-        private string GetElapsedTimeLabel(string time)
+        private string GetElapsedTimeLabel(PromptEditorItem promptEditorItem)
         {
             // Attempt to parse the time string into a DateTime
-            if (!DateTime.TryParse(time, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedTime))
+            if (promptEditorItem.startTime == null)
+            {
+                Debug.Log("Here it is");
+            }
+            
+            if (!DateTime.TryParse(promptEditorItem.time, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedTime))
             {
                 throw new ArgumentException("Invalid time format");
             }
@@ -593,22 +600,86 @@ namespace GaussianSplatting.Editor
         {
             if (GUILayout.Button(new GUIContent(m_promptDeleteIcon, "Delete"), m_deleteStyle))
             {
-                promptEditorItem.deleted = true;
-                if (promptEditorItem.gameobject != null)
-                {
-                    DestroyImmediate(promptEditorItem.gameobject);
-                }
+                bool confirmDeletion =
+                    !GaussianSplattingPackageSettings.Instance.ConfirmDeletes || EditorUtility.DisplayDialog(
+                        "Confirm Deletion",
+                        $"Are you sure you want to delete the prompt\n{promptEditorItem.prompt}?\n\nThis action cannot be undone.\n\n" +
+                        $"You can change the settings for this dialog in Project Settings > 404-GEN 3D Generator",
+                        "Yes",
+                        "No"
+                    );
 
-                promptEditorItem.gameobject = null;
-                promptEditorItem.renderer = null;
+                if (confirmDeletion)
+                {
+                    promptEditorItem.deleted = true;
+
+                    if (GaussianSplattingPackageSettings.Instance.DeleteAssociatedFilesWithPrompt)
+                    {
+                        if (promptEditorItem.renderer != null)
+                        {
+                            DeleteAsset(promptEditorItem.renderer.m_Asset.posData);
+                            DeleteAsset(promptEditorItem.renderer.m_Asset.colorData);
+                            DeleteAsset(promptEditorItem.renderer.m_Asset.otherData);
+                            DeleteAsset(promptEditorItem.renderer.m_Asset.shData);
+                            DeleteAsset(promptEditorItem.renderer.m_Asset.chunkData);
+                            DeleteAsset(promptEditorItem.renderer.m_Asset);
+                        }
+                    }
+
+                    promptEditorItem.renderer = null;
+
+                    if (promptEditorItem.gameobject != null)
+                    {
+                        DestroyImmediate(promptEditorItem.gameobject);
+                    }
+
+                    promptEditorItem.gameobject = null;
                 
-                promptEditorItem.isActive = false;
-                if (promptEditorItem.isActive)
-                {
-                    //todo: close websocket connection
-                }
+                    promptEditorItem.isActive = false;
+                    if (promptEditorItem.isActive)
+                    {
+                        CloseWebSocket();
+                    }
 
-                promptEditorItem.Log("Deleted by user");
+                    promptEditorItem.Log("Deleted by user");
+                }
+            }
+        }
+
+        private void DeleteAsset(Object asset)
+        {
+            // Get the asset path
+            if (asset == null)
+                return;
+            
+            var assetName = asset.name;
+            string assetPath = AssetDatabase.GetAssetPath(asset);
+
+            // Check if the asset path is valid
+            if (!string.IsNullOrEmpty(assetPath))
+            {
+                // Delete the asset
+                if (AssetDatabase.DeleteAsset(assetPath))
+                {
+                    if (GaussianSplattingPackageSettings.Instance.LogToConsole)
+                    {
+                        Debug.Log($"Successfully deleted asset: {assetName}");
+                    }
+                }
+                else
+                {
+                    if (GaussianSplattingPackageSettings.Instance.LogToConsole)
+                    {
+                        Debug.LogError($"Failed to delete asset: {assetName}");
+                    }
+                }
+            }
+            else
+            {
+                if (GaussianSplattingPackageSettings.Instance.LogToConsole)
+                {
+                    Debug.LogWarning("The object is not a valid asset.");
+                }
             }
         }
 
@@ -616,8 +687,8 @@ namespace GaussianSplatting.Editor
         {
             windowData.ClearDeletedItems();
             
-            var hasActivePrompt = windowData.HasActivePrompt();
-            if (hasActivePrompt)
+            var activePrompt = windowData.GetActivePrompt();
+            if (activePrompt != null)
             {
                 return;
             }
@@ -625,11 +696,19 @@ namespace GaussianSplatting.Editor
             var promptItem = windowData.GetUnprocessedPromptEditorItem();
             if (promptItem == null)
             {
+                if (activePrompt.HasTimedOut())
+                {
+                    activePrompt.isActive = false;
+                    activePrompt.Log("Prompt timed out");
+                    activePrompt.promptStatus = PromptStatus.Canceled;
+                    CloseWebSocket();
+                }
                 return;
             }
 
             promptItem.isActive = true;
             promptItem.isStarted = true;
+            promptItem.ResetStartTime();
             
             // Initialize WebSocket
             m_webSocket = new ClientWebSocket();

@@ -25,9 +25,9 @@ namespace GaussianSplatting.Editor
                     ).ToList();
         }
 
-        public bool HasActivePrompt()
+        public PromptEditorItem GetActivePrompt()
         {
-            return m_promptEditorItems.Any(promptItem => promptItem.isActive);
+            return m_promptEditorItems.FirstOrDefault(promptItem => promptItem.isActive);
         }
 
         public void EnqueuePrompt(string prompt)
@@ -35,7 +35,8 @@ namespace GaussianSplatting.Editor
             var promptItem = new PromptEditorItem
             {
                 prompt = prompt,
-                time = DateTime.Now.ToString(CultureInfo.InvariantCulture)
+                time = DateTime.Now.ToString(CultureInfo.InvariantCulture),
+                startTime = DateTime.Now
             };
             promptItem.Log("Equeued");
             m_promptEditorItems.Add(promptItem);
@@ -65,6 +66,8 @@ namespace GaussianSplatting.Editor
         public GameObject gameobject;
         public GaussianSplatRenderer renderer;
 
+        public DateTime startTime;
+
         public void Log(string log)
         {
             if (GaussianSplattingPackageSettings.Instance.LogToConsole)
@@ -82,6 +85,13 @@ namespace GaussianSplatting.Editor
             }
             logs.Add(error);
         }
+
+        public bool HasTimedOut()
+        {
+            return (DateTime.Now - startTime).TotalSeconds >
+                   GaussianSplattingPackageSettings.Instance.PromptTimeoutInSeconds;
+        }
+
     }
 
     [Serializable]
