@@ -867,7 +867,7 @@ namespace GaussianSplatting.Editor
             }
             
             // Find all assets in the project of the type 'UniversalRenderPipelineAsset'
-            if (FindObjectOfType<EnqueueURPPass>() != null)
+            if (FindFirstObjectByType<EnqueueURPPass>() != null)
             {
                 m_showRenderingSetup = false;
                 return;
@@ -882,7 +882,7 @@ namespace GaussianSplatting.Editor
                 return;
             }
             
-            CustomPassVolume[] volumes = FindObjectsOfType<CustomPassVolume>();
+            CustomPassVolume[] volumes = FindObjectsByType<CustomPassVolume>();
 
             
             bool gaussianSplatHDRPPassFound = false;
