@@ -384,14 +384,14 @@ namespace GaussianSplatting.Editor
             GUILayout.Space(4);
             
             //Generate button
-            var generateButtonEnabled = !string.IsNullOrEmpty(m_inputText); 
+            var generateButtonEnabled = IsValidInput(m_inputText); 
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             GUI.enabled = generateButtonEnabled;
             if (GUILayout.Button("Generate", m_generateButtonStyle))
             {
                 RenderingSetupCheck();
-                windowData.EnqueuePrompt(m_inputText);
+                windowData.EnqueuePrompt(m_inputText.Trim());
                 m_inputText = "";
                 windowData.promptsScrollPosition = Vector2.zero;
                 Repaint();
@@ -402,6 +402,11 @@ namespace GaussianSplatting.Editor
             GUILayout.EndHorizontal();
 
             GUILayout.EndVertical();
+        }
+
+        private bool IsValidInput(string input)
+        {
+            return !string.IsNullOrWhiteSpace(input.Trim()); 
         }
 
         private void DrawPromptsTableItems()
