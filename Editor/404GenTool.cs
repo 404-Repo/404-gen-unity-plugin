@@ -259,18 +259,20 @@ namespace GaussianSplatting.Editor
                 fixedHeight = 60,
             };
 
-            m_timeLabelStyle ??= new GUIStyle(GUI.skin.label)
+            m_timeLabelStyle ??= new GUIStyle
             {
                 fixedWidth = 100,
                 fixedHeight = 22,
-                normal = {textColor = Color.white}
+                normal = {textColor = Color.white},
+                alignment = TextAnchor.MiddleLeft
             };
             
             m_logLabelStyle ??= new GUIStyle
             {
                 fixedWidth = 60,
                 fixedHeight = 22,
-                normal = {textColor = Color.white}
+                normal = {textColor = Color.white},
+                alignment = TextAnchor.MiddleLeft
             };
 
             m_deleteStyle ??= new GUIStyle(GUIStyle.none)
