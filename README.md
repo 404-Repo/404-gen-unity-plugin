@@ -116,6 +116,12 @@ To extend the renderer's capabilities, **add a renderer feature** - custom rende
 Add a feature **GaussianSplatURPFeature** provided in this package.
 This will enable the rendering of splats that get fetched from the 404-Gen 3D Generator.
 
+> [!NOTE] Unity 6 projects require enabling [Compatibility Mode (Render Graph Disabled)](https://docs.unity3d.com/6000.0/Documentation/Manual/urp/compatibility-mode.html) in URP graphics settings to use custom  implementation of Scriptable Render Pass without using the render graph API.
+> 
+> <img alt="Add renderer feature" src="./Documentation~/Images/Compatibility Mode in Project settings marked.png">
+> 
+> The setting is in Project Settings > Graphics > Pipeline Specific Settings > URP > Render Graph.
+
 Default Unity’s URP project template will have three levels of quality by default. These can be seen in **Project Settings** under the **Quality section**.
 
 <img alt="Quality Render Pipeline Assets" src="./Documentation~/Images/Quality Render Pipeline Assets.png">
@@ -123,6 +129,8 @@ Default Unity’s URP project template will have three levels of quality by defa
 Each quality level can be set to use a different Render pipeline asset. This is where you can make performance better on lower-end hardware or make graphics look better on higher-end hardware. Adding a **GaussianSplatURPFeature** needs to be applied to all Universal Render Pipeline assets of each quality level where Gaussian splats are required to be rendered.
 
 <img alt="URP Assets and Universal Renderer Data" src="./Documentation~/Images/URP Assets and Universal Renderer Data.png">
+
+
 
 ### High Definition rendering pipeline integration 
 
