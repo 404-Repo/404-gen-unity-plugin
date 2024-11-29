@@ -25,7 +25,7 @@ namespace GaussianSplatting.Editor
 {
     public class WebSocketEditorWindow : EditorWindow
     {
-        private string m_inputText;
+        private string m_inputText = "";
         private ClientWebSocket m_webSocket;
         private Uri m_serverUri = new Uri("wss://0akbihcx8cbfk2-8888.proxy.runpod.net/ws/generate/");
         private string m_apiKey = "yavEethoS162KNMgvgPw1TUXyjlQaDmNrHS6lAzb5CM";
