@@ -225,6 +225,11 @@ namespace GaussianSplatting.Editor
             
             m_promptLabelStyle ??= new GUIStyle
             {
+                margin = new RectOffset(12, 12, 8, 2)
+            };
+            
+            m_promptLabelStyle ??= new GUIStyle
+            {
                 fontStyle = FontStyle.Bold,
                 fontSize = 16,
                 wordWrap = false,
