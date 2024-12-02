@@ -53,6 +53,14 @@ namespace GaussianSplatting.Editor
                     GUILayout.Space(8);
                     //setting for logging to Console
                     settings.LogToConsole = EditorGUILayout.ToggleLeft("Send logs to Console window", settings.LogToConsole);
+
+                    settings.DeleteAssociatedFilesWithPrompt = EditorGUILayout.ToggleLeft(
+                        "Deleting prompt also deletes associated generated files",
+                        settings.DeleteAssociatedFilesWithPrompt);
+
+                    settings.UsePromptTimeout = EditorGUILayout.BeginToggleGroup("Auto-cancel Prompts that Timeout", settings.UsePromptTimeout);
+                    settings.PromptTimeoutInSeconds = EditorGUILayout.IntSlider("Timeout threshold (sec)", settings.PromptTimeoutInSeconds, 30, 90, GUILayout.MaxWidth(400));
+                    EditorGUILayout.EndToggleGroup();
                     
                     if (GUI.changed)
                     {

@@ -53,6 +53,25 @@ Unity 2022.3+
 1. Go to **Window > 404-GEN 3D Generator** to open the generation window
 2. Type your prompt and click Generate. Each generation should take **20 to 30 seconds**
 
+<img alt="Enable unsafe code" src="./Documentation~/Images/Prompts.png">
+
+The 404-GEN 3D Generator window tracks the progress of generating the models for prompts.
+Once the prompt has been enqueued, it waits on the backend to complete the generation.
+
+Generation process changes states from <img alt="Started" src="./Editor/Images/pending.png" height="20"> Started to <img alt="Completed" src="./Editor/Images/complete.png" height="20"> Completed or 
+<img alt="Failed" src="./Editor/Images/failed.png" height="20">  Failed.
+
+Use available action icons to:
+
+  * <img alt="Target" src="./Editor/Images/close.png" height="20">  cancel active prompt entry
+  * <img alt="Target" src="./Editor/Images/hidden.png" height="20"> or <img alt="Target" src="./Editor/Images/visible.png" height="20"> show or hide created Gaussian splat model
+  * <img alt="Target" src="./Editor/Images/target.png" height="20"> select generated model in Scene view and Inspector window
+  * <img alt="Resend" src="./Editor/Images/retry.png" height="20"> resend failed or canceled prompt
+  * <img alt="Log" src="./Editor/Images/logs.png" height="20">**LOGS** show log messages in a tooltip
+  * <img alt="Delete" src="./Editor/Images/delete.png" height="20"> delete prompt entry
+  * <img alt="Settings" src="./Editor/Images/settings.png" height="20"> open Project settings for this package
+    
+
 ### Prompts
 A prompt is a short text phrase that 404—GEN interprets to create a 3D Gaussian Splat. In this section, we’ll explore how to craft clear and effective prompts, along with tips to refine your input for the best results.
 Describe a single element or object, rather than an entire scene. A good rule of thumb is something you can look in toward, rather than out toward, regardless of size. "Sky" wouldn't work, but "planet" would.
@@ -97,6 +116,13 @@ To extend the renderer's capabilities, **add a renderer feature** - custom rende
 Add a feature **GaussianSplatURPFeature** provided in this package.
 This will enable the rendering of splats that get fetched from the 404-Gen 3D Generator.
 
+> [!NOTE]
+> Unity 6 projects require enabling [Compatibility Mode (Render Graph Disabled)](https://docs.unity3d.com/6000.0/Documentation/Manual/urp/compatibility-mode.html) in URP graphics settings to use custom  implementation of Scriptable Render Pass without using the render graph API.
+> 
+> <img alt="Add renderer feature" src="./Documentation~/Images/Compatibility Mode in Project settings marked.png">
+> 
+> The setting is in Project Settings > Graphics > Pipeline Specific Settings > URP > Render Graph.
+
 Default Unity’s URP project template will have three levels of quality by default. These can be seen in **Project Settings** under the **Quality section**.
 
 <img alt="Quality Render Pipeline Assets" src="./Documentation~/Images/Quality Render Pipeline Assets.png">
@@ -104,6 +130,8 @@ Default Unity’s URP project template will have three levels of quality by defa
 Each quality level can be set to use a different Render pipeline asset. This is where you can make performance better on lower-end hardware or make graphics look better on higher-end hardware. Adding a **GaussianSplatURPFeature** needs to be applied to all Universal Render Pipeline assets of each quality level where Gaussian splats are required to be rendered.
 
 <img alt="URP Assets and Universal Renderer Data" src="./Documentation~/Images/URP Assets and Universal Renderer Data.png">
+
+
 
 ### High Definition rendering pipeline integration 
 

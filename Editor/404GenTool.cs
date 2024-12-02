@@ -10,12 +10,22 @@ using System.Threading.Tasks;
 using System.Net.WebSockets;
 using Newtonsoft.Json;
 using GaussianSplatting.Runtime;
+using Object = UnityEngine.Object;
+
+#if GS_ENABLE_URP
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+#endif
+
+#if GS_ENABLE_HDRP
+using UnityEngine.Rendering.HighDefinition;
+#endif
 
 namespace GaussianSplatting.Editor
 {
     public class WebSocketEditorWindow : EditorWindow
     {
-        private string m_inputText;
+        private string m_inputText = "";
         private ClientWebSocket m_webSocket;
         private Uri m_serverUri = new Uri("wss://0akbihcx8cbfk2-8888.proxy.runpod.net/ws/generate/");
         private string m_apiKey = "yavEethoS162KNMgvgPw1TUXyjlQaDmNrHS6lAzb5CM";
@@ -50,8 +60,10 @@ namespace GaussianSplatting.Editor
                 AssetDatabase.CreateAsset(windowData, WebSocketEditorWindowData.EditorWindowDataPath);
                 AssetDatabase.SaveAssets();
             }
+
+            EditorApplication.hierarchyChanged += RenderingSetupCheck;
+            RenderingSetupCheck();
         }
-        
 
         private void OnGUI()
         {
@@ -72,7 +84,7 @@ namespace GaussianSplatting.Editor
             GUILayout.EndHorizontal();
             
             GUILayout.Space(20);
-            
+            DrawRenderingSetup();
             DrawPromptsTableItems();
         }
 
@@ -213,7 +225,6 @@ namespace GaussianSplatting.Editor
             
             m_promptLabelStyle ??= new GUIStyle
             {
-                //normal = { textColor = shockingOrangeColor },
                 fontStyle = FontStyle.Bold,
                 fontSize = 16,
                 wordWrap = false,
@@ -237,18 +248,31 @@ namespace GaussianSplatting.Editor
             };
             
 
+            m_rowDarkStyle ??= new GUIStyle(GUI.skin.box)
+            {
+                normal = { background = darkRowTexture },
+                fixedHeight = 60,
+            };
+            m_rowLightStyle ??= new GUIStyle(GUI.skin.box)
+            {
+                normal = { background = lightRowTexture },
+                fixedHeight = 60,
+            };
+
             m_timeLabelStyle ??= new GUIStyle
             {
                 fixedWidth = 100,
                 fixedHeight = 22,
-                normal = {textColor = Color.white}
+                normal = {textColor = Color.white},
+                alignment = TextAnchor.MiddleLeft
             };
             
             m_logLabelStyle ??= new GUIStyle
             {
                 fixedWidth = 60,
                 fixedHeight = 22,
-                normal = {textColor = Color.white}
+                normal = {textColor = Color.white},
+                alignment = TextAnchor.MiddleLeft
             };
 
             m_deleteStyle ??= new GUIStyle(GUIStyle.none)
@@ -360,13 +384,14 @@ namespace GaussianSplatting.Editor
             GUILayout.Space(4);
             
             //Generate button
-            var generateButtonEnabled = !string.IsNullOrEmpty(m_inputText); 
+            var generateButtonEnabled = IsValidInput(m_inputText); 
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             GUI.enabled = generateButtonEnabled;
             if (GUILayout.Button("Generate", m_generateButtonStyle))
             {
-                windowData.EnqueuePrompt(m_inputText);
+                RenderingSetupCheck();
+                windowData.EnqueuePrompt(m_inputText.Trim());
                 m_inputText = "";
                 windowData.promptsScrollPosition = Vector2.zero;
                 Repaint();
@@ -377,6 +402,11 @@ namespace GaussianSplatting.Editor
             GUILayout.EndHorizontal();
 
             GUILayout.EndVertical();
+        }
+
+        private bool IsValidInput(string input)
+        {
+            return !string.IsNullOrWhiteSpace(input.Trim()); 
         }
 
         private void DrawPromptsTableItems()
@@ -595,6 +625,7 @@ namespace GaussianSplatting.Editor
                         promptEditorItem.promptStatus = PromptStatus.Sent;
                         promptEditorItem.isActive = false;
                         promptEditorItem.isStarted = false;
+                        promptEditorItem.ResetStartTime();
                     }
                     break;
                 
@@ -629,14 +660,19 @@ namespace GaussianSplatting.Editor
 
         private void DrawTime(PromptEditorItem promptEditorItem)
         {
-            var elapsedTimeLabel = GetElapsedTimeLabel(promptEditorItem.time);
+            var elapsedTimeLabel = GetElapsedTimeLabel(promptEditorItem);
             GUILayout.Label(new GUIContent(elapsedTimeLabel, m_promptTimerIcon, promptEditorItem.time), m_timeLabelStyle);
         }
 
-        private string GetElapsedTimeLabel(string time)
+        private string GetElapsedTimeLabel(PromptEditorItem promptEditorItem)
         {
             // Attempt to parse the time string into a DateTime
-            if (!DateTime.TryParse(time, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedTime))
+            if (promptEditorItem.startTime == null)
+            {
+                Debug.Log("Here it is");
+            }
+            
+            if (!DateTime.TryParse(promptEditorItem.time, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedTime))
             {
                 throw new ArgumentException("Invalid time format");
             }
@@ -689,22 +725,86 @@ namespace GaussianSplatting.Editor
             if (GUILayout.Button(new GUIContent(m_promptDeleteIcon, "Delete"),
                     tinyLayout ? m_deleteTinyStyle : m_deleteStyle))
             {
-                promptEditorItem.deleted = true;
-                if (promptEditorItem.gameobject != null)
+                bool confirmDeletion =
+                    !GaussianSplattingPackageSettings.Instance.ConfirmDeletes || EditorUtility.DisplayDialog(
+                        "Confirm Deletion",
+                        $"Are you sure you want to delete the prompt\n{promptEditorItem.prompt}?\n\nThis action cannot be undone.\n\n" +
+                        $"You can change the settings for this dialog in Project Settings > 404-GEN 3D Generator",
+                        "Yes",
+                        "No"
+                    );
+
+                if (confirmDeletion)
                 {
-                    DestroyImmediate(promptEditorItem.gameobject);
+                    promptEditorItem.deleted = true;
+
+                    if (GaussianSplattingPackageSettings.Instance.DeleteAssociatedFilesWithPrompt)
+                    {
+                        if (promptEditorItem.renderer != null)
+                        {
+                            DeleteAsset(promptEditorItem.renderer.m_Asset.posData);
+                            DeleteAsset(promptEditorItem.renderer.m_Asset.colorData);
+                            DeleteAsset(promptEditorItem.renderer.m_Asset.otherData);
+                            DeleteAsset(promptEditorItem.renderer.m_Asset.shData);
+                            DeleteAsset(promptEditorItem.renderer.m_Asset.chunkData);
+                            DeleteAsset(promptEditorItem.renderer.m_Asset);
+                        }
+                    }
+
+                    promptEditorItem.renderer = null;
+
+                    if (promptEditorItem.gameobject != null)
+                    {
+                        DestroyImmediate(promptEditorItem.gameobject);
+                    }
+
+                    promptEditorItem.gameobject = null;
+                
+                    promptEditorItem.isActive = false;
+                    if (promptEditorItem.isActive)
+                    {
+                        CloseWebSocket();
+                    }
+
+                    promptEditorItem.Log("Deleted by user");
                 }
+            }
+        }
 
-                promptEditorItem.gameobject = null;
-                promptEditorItem.renderer = null;
+        private void DeleteAsset(Object asset)
+        {
+            // Get the asset path
+            if (asset == null)
+                return;
+            
+            var assetName = asset.name;
+            string assetPath = AssetDatabase.GetAssetPath(asset);
 
-                promptEditorItem.isActive = false;
-                if (promptEditorItem.isActive)
+            // Check if the asset path is valid
+            if (!string.IsNullOrEmpty(assetPath))
+            {
+                // Delete the asset
+                if (AssetDatabase.DeleteAsset(assetPath))
                 {
-                    //todo: close websocket connection
+                    if (GaussianSplattingPackageSettings.Instance.LogToConsole)
+                    {
+                        Debug.Log($"Successfully deleted asset: {assetName}");
+                    }
                 }
-
-                promptEditorItem.Log("Deleted by user");
+                else
+                {
+                    if (GaussianSplattingPackageSettings.Instance.LogToConsole)
+                    {
+                        Debug.LogError($"Failed to delete asset: {assetName}");
+                    }
+                }
+            }
+            else
+            {
+                if (GaussianSplattingPackageSettings.Instance.LogToConsole)
+                {
+                    Debug.LogWarning("The object is not a valid asset.");
+                }
             }
         }
 
@@ -712,9 +812,16 @@ namespace GaussianSplatting.Editor
         {
             windowData.ClearDeletedItems();
             
-            var hasActivePrompt = windowData.HasActivePrompt();
-            if (hasActivePrompt)
+            var activePrompt = windowData.GetActivePrompt();
+            if (activePrompt != null)
             {
+                if (activePrompt.HasTimedOut())
+                {
+                    activePrompt.isActive = false;
+                    activePrompt.Log("Prompt timed out");
+                    activePrompt.promptStatus = PromptStatus.Canceled;
+                    CloseWebSocket();
+                }
                 return;
             }
 
@@ -726,6 +833,7 @@ namespace GaussianSplatting.Editor
 
             promptItem.isActive = true;
             promptItem.isStarted = true;
+            promptItem.ResetStartTime();
             
             // Initialize WebSocket
             m_webSocket = new ClientWebSocket();
@@ -751,6 +859,140 @@ namespace GaussianSplatting.Editor
                 promptItem.promptStatus = PromptStatus.Failed;
                 promptItem.isActive = false;
                 promptItem.Log(ex.Message);
+            }
+        }
+
+        private bool m_showRenderingSetup;
+        
+        private void RenderingSetupCheck()
+        {
+#if GS_ENABLE_URP
+            if (GameObject.Find("GaussianSplatURPPass") != null)
+            {
+                m_showRenderingSetup = false;
+                return;
+            }
+            
+            // Find all assets in the project of the type 'UniversalRenderPipelineAsset'
+            if (FindFirstObjectByType<EnqueueURPPass>() != null)
+            {
+                m_showRenderingSetup = false;
+                return;
+            }
+#endif
+
+#if GS_ENABLE_HDRP
+            var effectInstance = GameObject.Find("GaussianSplatEffect");
+            if (effectInstance != null)
+            {
+                m_showRenderingSetup = false;
+                return;
+            }
+            
+            CustomPassVolume[] volumes = FindObjectsByType<CustomPassVolume>(FindObjectsSortMode.None);
+
+            
+            bool gaussianSplatHDRPPassFound = false;
+            foreach (var volume in volumes)
+            {
+                if (volume && volume.customPasses != null)
+                {
+                    if (volume.customPasses.Any(customPass => customPass is GaussianSplatHDRPPass))
+                    {
+                        gaussianSplatHDRPPassFound = true;
+                        break;
+                    }
+                }
+            }
+
+            if (gaussianSplatHDRPPassFound)
+            {
+                m_showRenderingSetup = false;
+                return;
+            }
+#endif
+            m_showRenderingSetup = true;
+        }
+        
+        private void DrawRenderingSetup()
+        {
+            if (!m_showRenderingSetup) return;
+#if GS_ENABLE_URP
+            EditorGUILayout.HelpBox(
+                "To add Gaussian splats to the URP rendering process, a custom Render pass must enqueued when camera starts rendering the scene. " +
+                "\n\nClick here to add a gameobject that enqueues custom rendering pass by instantiating a prefab named 'GaussianSplatURPPass' from the Resources folder.",
+                MessageType.Warning);
+
+            if (GUILayout.Button("Add custom rendering pass"))
+            {
+                AddCustomRenderingPassToCamera();
+            }
+            
+#elif GS_ENABLE_HDRP
+            EditorGUILayout.HelpBox(
+                    "To add Gaussian splats to the HDRP rendering process, a CustomPassVolume must be present in the scene. " +
+                    "Click here to add a preconfigured CustomPassVolume by instantiating a prefab named 'GaussianSplatEffect' from the Resources folder.",
+                    MessageType.Warning);
+
+            if (GUILayout.Button("Add HDRP custom pass"))
+            {
+                AddGaussianSplatEffect();
+            }
+#endif
+            GUILayout.Space(20);
+        }
+        
+        private void AddGaussianSplatEffect()
+        {
+            // Load the prefab from the Resources folder
+            GameObject prefab = Resources.Load<GameObject>("GaussianSplatEffect");
+
+            if (prefab == null)
+            {
+                Debug.LogError("GaussianSplatEffect prefab not found in Resources folder. Please ensure the prefab is correctly placed in a 'Resources' folder.");
+                return;
+            }
+
+            // Instantiate the prefab into the scene
+            GameObject instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+
+            if (instance != null)
+            {
+                Undo.RegisterCreatedObjectUndo(instance, "Add Gaussian Splat Effect");
+                Selection.activeGameObject = instance;
+
+                Debug.Log("Gaussian Splat Effect added to the scene.");
+            }
+            else
+            {
+                Debug.LogError("Failed to instantiate GaussianSplatEffect prefab.");
+            }
+        }
+        
+        private void AddCustomRenderingPassToCamera()
+        {
+            // Load the prefab from the Resources folder
+            GameObject prefab = Resources.Load<GameObject>("GaussianSplatURPPass");
+
+            if (prefab == null)
+            {
+                Debug.LogError("GaussianSplatURPPass prefab not found in Resources folder. Please ensure the prefab is correctly placed in a 'Resources' folder.");
+                return;
+            }
+
+            // Instantiate the prefab into the scene
+            GameObject instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+
+            if (instance != null)
+            {
+                Undo.RegisterCreatedObjectUndo(instance, "Add Gaussian Splat URP Pass");
+                Selection.activeGameObject = instance;
+
+                Debug.Log("GaussianSplatURPPass added to the scene.");
+            }
+            else
+            {
+                Debug.LogError("Failed to instantiate GaussianSplatURPPass prefab.");
             }
         }
 
@@ -893,6 +1135,7 @@ namespace GaussianSplatting.Editor
         private void OnDestroy()
         {
             CloseWebSocket();
+            EditorApplication.hierarchyChanged -= RenderingSetupCheck;
         }
 
         private async void CloseWebSocket()
