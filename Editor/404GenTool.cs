@@ -889,7 +889,7 @@ namespace GaussianSplatting.Editor
                 return;
             }
             
-            CustomPassVolume[] volumes = FindObjectsByType<CustomPassVolume>();
+            CustomPassVolume[] volumes = FindObjectsByType<CustomPassVolume>(FindObjectsSortMode.None);
 
             
             bool gaussianSplatHDRPPassFound = false;
