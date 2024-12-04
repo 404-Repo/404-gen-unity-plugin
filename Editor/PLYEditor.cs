@@ -29,7 +29,7 @@ namespace GaussianSplatting.Editor
                         var asset = gaussianSplatAssetCreator.CreateAsset(path);
                         GameObject newObject = new GameObject(assetName);
                         var renderer = newObject.AddComponent<GaussianSplatRenderer>();
-                        //todo: why?
+                        
                         newObject.SetActive(false);
                         newObject.SetActive(true);
                 
