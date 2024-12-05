@@ -3,8 +3,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using GaussianSplatting.Runtime;
+using GK;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEditor;
@@ -342,6 +344,27 @@ namespace GaussianSplatting.Editor
                     }
                 }
             }
+
+            EditorGUILayout.Space();
+            if (GUILayout.Button("Add Mesh collider"))
+            {
+                AddMeshCollider(gs);
+            }
+            
+            if (GUILayout.Button("Remove Mesh collider"))
+            {
+                var meshCollider = gs.gameObject.GetComponent<MeshCollider>();
+                if (meshCollider)
+                {
+                    DestroyImmediate(meshCollider);
+                }
+                
+                var meshFilter = gs.gameObject.GetComponent<MeshFilter>();
+                if (meshCollider)
+                {
+                    DestroyImmediate(meshFilter);
+                }
+            }
         }
 
         static void DrawSeparator()
@@ -440,5 +463,97 @@ namespace GaussianSplatting.Editor
 
             Debug.Log($"Exported PLY {path} with {aliveCount:N0} splats");
         }
+
+        private static void AddMeshCollider(GaussianSplatRenderer gs)
+        {
+            var asset = gs.asset;
+            var pos = asset.posData.GetData<float>();
+            
+            var posArray = pos.ToArray();
+            var splatPositions = ConvertToVector3Array(posArray);
+
+            //hull generation algorithm
+            var convexHullCalculator = new ConvexHullCalculator();
+            List<Vector3> verts = new List<Vector3>();
+            List<int> tris = new List<int>();
+            List<Vector3> normals = new List<Vector3>();
+            convexHullCalculator.GenerateHull(splatPositions.ToList(), true, ref verts, ref tris, ref normals);
+
+            //add mesh collider component and set it up
+            var mesh = new Mesh();
+            mesh.SetVertices(verts);
+            mesh.SetTriangles(tris, 0);
+            mesh.SetNormals(normals);
+            mesh.name = gs.gameObject.name;
+
+            var gameObject = gs.gameObject;
+            
+            var meshFilter = gameObject.GetComponent<MeshFilter>();
+            if (!meshFilter)
+            {
+                meshFilter = gameObject.AddComponent<MeshFilter>();
+            }
+            
+            meshFilter.sharedMesh = mesh;
+
+            var meshCollider = gameObject.GetComponent<MeshCollider>();
+            if (!meshCollider)
+            {
+                meshCollider = gameObject.AddComponent<MeshCollider>();
+            }
+            meshCollider.sharedMesh = mesh;
+            meshCollider.convex = true;
+        }
+
+        private static Vector3[] ConvertToVector3Array(float[] floatArray)
+        {
+            // Initialize the Vector3 array
+            int vectorCount = floatArray.Length / 3;
+            Vector3[] vectorArray = new Vector3[vectorCount];
+
+            // Populate the Vector3 array
+            for (int i = 0; i < vectorCount; i++)
+            {
+                int baseIndex = i * 3;
+                vectorArray[i] = new Vector3(
+                    floatArray[baseIndex], // x
+                    floatArray[baseIndex + 1], // y
+                    floatArray[baseIndex + 2] // z
+                );
+            }
+
+            return vectorArray;
+        }
+
+        // Method that spawns quads at each position, facing the camera
+        public static void CreateQuadsFacingCamera(Vector3[] positions, Camera camera)
+        {
+            // Create a parent GameObject
+            GameObject parentObject = new GameObject("Quads");
+            var scale = Vector3.one * 0.01f;
+            var skip = 100;
+
+            for (var index = 0; index < positions.Length; index += skip)
+            {
+                var position = positions[index];
+                // Create a quad primitive
+                GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+
+                // Set the position of the quad
+                quad.transform.position = position;
+
+                // Rotate the quad to face the camera
+                quad.transform.LookAt(camera.transform);
+
+                // Optional: Adjust the rotation to ensure the quad is aligned properly
+                quad.transform.Rotate(0, 90, 0); // Adjust the rotation if needed
+
+                // Set the parent of the quad to be the newly created parent GameObject
+                quad.transform.SetParent(parentObject.transform);
+
+                quad.transform.localScale = scale;
+            }
+        }
+
     }
 }

@@ -21,33 +21,25 @@ namespace GaussianSplatting.Editor
     {
         const string kProgressTitle = "Creating Gaussian Splat Asset";
         const string kCamerasJson = "cameras.json";
-        const string kPrefQuality = "nesnausk.GaussianSplatting.CreatorQuality";
-        const string kPrefOutputFolder = "nesnausk.GaussianSplatting.CreatorOutputFolder";
-
-        enum DataQuality
-        {
-            VeryHigh,
-            High,
-            Medium,
-            Low,
-            VeryLow,
-            Custom,
-        };
-
-        // readonly FilePickerControl m_FilePicker = new();
 
         bool m_ImportCameras = false;
 
-        //DataQuality m_Quality = DataQuality.VeryHigh;
-        [SerializeField] GaussianSplatAsset.VectorFormat m_FormatPos;
-        [SerializeField] GaussianSplatAsset.VectorFormat m_FormatScale;
-        [SerializeField] GaussianSplatAsset.ColorFormat m_FormatColor;
-        [SerializeField] GaussianSplatAsset.SHFormat m_FormatSH;
+        GaussianSplatAsset.VectorFormat m_FormatPos = GaussianSplatAsset.VectorFormat.Float32;
+        GaussianSplatAsset.VectorFormat m_FormatScale = GaussianSplatAsset.VectorFormat.Float32;
+        GaussianSplatAsset.ColorFormat m_FormatColor = GaussianSplatAsset.ColorFormat.Float32x4;
+        GaussianSplatAsset.SHFormat m_FormatSH = GaussianSplatAsset.SHFormat.Float32;
 
         string m_ErrorMessage;
         string m_PrevPlyPath;
         int m_PrevVertexCount;
         long m_PrevFileSize;
+
+        private bool m_PlyReadOverrideVertexStride = false;
+
+        public GaussianSplatAssetCreator(bool plyReadOverrideVertexStride)
+        {
+            m_PlyReadOverrideVertexStride = plyReadOverrideVertexStride;
+        }
 
         bool isUsingChunks =>
             m_FormatPos != GaussianSplatAsset.VectorFormat.Float32 ||
@@ -190,7 +182,7 @@ namespace GaussianSplatting.Editor
             NativeArray<byte> verticesRawData;
             try
             {
-                PLYFileReader.ReadFile(plyPath, out splatCount, out vertexStride, out _, out verticesRawData);
+                PLYFileReader.ReadFile(plyPath, out splatCount, out vertexStride, out _, out verticesRawData, m_PlyReadOverrideVertexStride);
             }
             catch (Exception ex)
             {
@@ -498,6 +490,11 @@ namespace GaussianSplatting.Editor
                     chunkMaxshs = math.max(chunkMaxshs, s.shE);
                     chunkMaxshs = math.max(chunkMaxshs, s.shF);
                 }
+                // make sure bounds are not zero
+                chunkMaxpos = math.max(chunkMaxpos, chunkMinpos + 1.0e-5f);
+                chunkMaxscl = math.max(chunkMaxscl, chunkMinscl + 1.0e-5f);
+                chunkMaxcol = math.max(chunkMaxcol, chunkMincol + 1.0e-5f);
+                chunkMaxshs = math.max(chunkMaxshs, chunkMinshs + 1.0e-5f);
 
                 // store chunk info
                 GaussianSplatAsset.ChunkInfo info = default;

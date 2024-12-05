@@ -31,7 +31,7 @@ namespace GaussianSplatting.Editor
         private string m_apiKey = "yavEethoS162KNMgvgPw1TUXyjlQaDmNrHS6lAzb5CM";
         private string m_plyFilePath = "";
         
-        private GaussianSplatAssetCreator m_creator = new();
+        private GaussianSplatAssetCreator m_creator = new(true);
         
         // holds data specific to this editor window
         private WebSocketEditorWindowData windowData;
