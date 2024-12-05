@@ -20,7 +20,7 @@ namespace GaussianSplatting.Editor
                 EditorGUILayout.HelpBox("This is a .ply file. You can load it using GaussianSplatAssetCreator.",
                     MessageType.Info);
 
-                if (GUILayout.Button("Create Gaussian splat asset"))
+                if (GUILayout.Button("Import to scene"))
                 {
                     try
                     {
