@@ -148,10 +148,7 @@ namespace GaussianSplatting.Editor
                 fontStyle = FontStyle.Bold,
                 richText = true,
                 padding = new RectOffset(10, 10, 10, 10),
-                wordWrap = true,
-                normal = {textColor = shockingOrangeColor},
-                active = {textColor = shockingOrangeColor},
-                focused = {textColor = shockingOrangeColor}
+                wordWrap = true
             };
             
             m_generateButtonStyle ??= new GUIStyle(GUI.skin.button)
