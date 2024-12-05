@@ -57,7 +57,7 @@ namespace GaussianSplatting.Editor.Utils
             }
         }
 
-        public static void ReadFile(string filePath, out int vertexCount, out int vertexStride, out List<string> attrNames, out NativeArray<byte> vertices)
+        public static void ReadFile(string filePath, out int vertexCount, out int vertexStride, out List<string> attrNames, out NativeArray<byte> vertices, bool overrideVertexStride)
         {
             using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             ReadHeaderImpl(filePath, out vertexCount, out vertexStride, out attrNames, fs);
@@ -66,6 +66,12 @@ namespace GaussianSplatting.Editor.Utils
             var readBytes = fs.Read(tempVertices);
             if (readBytes != tempVertices.Length)
                 throw new IOException($"PLY {filePath} read error, expected {tempVertices.Length} data bytes got {readBytes}");
+
+            if (!overrideVertexStride)
+            {
+                vertices = tempVertices;
+                return;
+            }
 
             int newVertexStride = 248;
             vertices = new NativeArray<byte>(vertexCount * newVertexStride, Allocator.Persistent);

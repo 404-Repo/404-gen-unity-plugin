@@ -25,7 +25,7 @@ namespace GaussianSplatting.Editor
                     try
                     {
                         var assetName = Path.GetFileNameWithoutExtension(path);
-                        var gaussianSplatAssetCreator = new GaussianSplatAssetCreator();
+                        var gaussianSplatAssetCreator = new GaussianSplatAssetCreator(false);
                         var asset = gaussianSplatAssetCreator.CreateAsset(path);
                         GameObject newObject = new GameObject(assetName);
                         var renderer = newObject.AddComponent<GaussianSplatRenderer>();

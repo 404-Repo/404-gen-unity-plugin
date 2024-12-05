@@ -470,8 +470,6 @@ namespace GaussianSplatting.Editor
             var pos = asset.posData.GetData<float>();
             
             var posArray = pos.ToArray();
-            Debug.Log("Pos array length " + posArray.Length);
-            
             var splatPositions = ConvertToVector3Array(posArray);
 
             //hull generation algorithm
