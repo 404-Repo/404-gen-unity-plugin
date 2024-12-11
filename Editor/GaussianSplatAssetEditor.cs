@@ -66,6 +66,18 @@ namespace GaussianSplatting.Editor
             EditorGUILayout.Vector3Field("Bounds Max", gs.boundsMax);
 
             EditorGUILayout.TextField("Data Hash", gs.dataHash.ToString());
+
+            EditorGUILayout.Space();
+            GUI.enabled = true;
+            if (GUILayout.Button("Instantiate in scene"))
+            {
+                GameObject newObject = new GameObject(gs.name);
+                var renderer = newObject.AddComponent<GaussianSplatRenderer>();
+                newObject.SetActive(false);
+                newObject.SetActive(true);
+                renderer.m_Asset = gs;
+                EditorUtility.SetDirty(gs);
+            }
         }
     }
 }

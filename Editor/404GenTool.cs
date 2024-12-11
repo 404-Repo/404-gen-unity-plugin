@@ -27,11 +27,11 @@ namespace GaussianSplatting.Editor
     {
         private string m_inputText = "";
         private ClientWebSocket m_webSocket;
-        private Uri m_serverUri = new Uri("wss://0akbihcx8cbfk2-8888.proxy.runpod.net/ws/generate/");
-        private string m_apiKey = "yavEethoS162KNMgvgPw1TUXyjlQaDmNrHS6lAzb5CM";
+        private Uri m_serverUri = new Uri("wss://5ksqra50ill2x1-8888.proxy.runpod.net/ws/generate/");
+        private string m_apiKey = "rnqk3og2CruVinbJFvmkroefRrFfubTpBfCpQqfMNU";      
         private string m_plyFilePath = "";
         
-        private GaussianSplatAssetCreator m_creator = new();
+        private GaussianSplatAssetCreator m_creator = new(true);
         
         // holds data specific to this editor window
         private WebSocketEditorWindowData windowData;
@@ -148,10 +148,7 @@ namespace GaussianSplatting.Editor
                 fontStyle = FontStyle.Bold,
                 richText = true,
                 padding = new RectOffset(10, 10, 10, 10),
-                wordWrap = true,
-                normal = {textColor = shockingOrangeColor},
-                active = {textColor = shockingOrangeColor},
-                focused = {textColor = shockingOrangeColor}
+                wordWrap = true
             };
             
             m_generateButtonStyle ??= new GUIStyle(GUI.skin.button)
@@ -1018,7 +1015,7 @@ namespace GaussianSplatting.Editor
         // Receives messages from the WebSocket server
         private async Task ReceiveMessages(PromptEditorItem promptItem)
         {
-            var buffer = new byte[1024 * 1014 * 8];
+            var buffer = new byte[1024 * 1014 * 150];
             while (m_webSocket.State == WebSocketState.Open)
             {
                 var result = await m_webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
