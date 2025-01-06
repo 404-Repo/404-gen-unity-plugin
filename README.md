@@ -13,8 +13,9 @@ This technique renders high fidelity objects using lots of tiny translucent elli
 #### Unity package
   
 - With this package, users can:
-  - Enter text prompts to generate **3D Gaussian Splats** assets
-  - Display **3D Gaussian Splats** assets inside Unity
+  - Enter text prompts to generate **3D Gaussian Splat** assets
+  - Display **3D Gaussian Splat** assets inside Unity
+  - Perform basic transformations on **3D Gaussian Splats**
 
 ## Installation
 
@@ -40,18 +41,70 @@ Unity 2022.3+
     - **D3D12** on Windows
     - **Metal** on Mac
     - **Vulkan** on Linux
-
-
+  
   <img alt="Set rendering backend" src="./Documentation~/Images/ProjectSettingsGraphicsAPI.gif">
 
-* Make sure that **Allow 'unsafe' Code** is checked
-
+* Check the **Allow 'unsafe' Code** box
+  
   <img alt="Enable unsafe code" src="./Documentation~/Images/EnableUnsafeCode.gif">
+
+For projects using the **Built-In Render Pipeline**, installation is complete. For others, please see the [Universal Render Pipeline (URP)](#universal-render-pipeline) and [High Definition Render Pipeline (HDRP)](#high-definition-render-pipeline) sections below.
+
+### Universal Render Pipeline
+Unity offers three main rendering pipelines:
+ - Built-In Render Pipeline (Standard) 
+ - Universal Render Pipeline (URP) 
+ - High Definition Render Pipeline (HDRP)
+
+The main difference lies in their target applications: the Built-In pipeline is the legacy and general-purpose option, URP balances quality and performance across platforms, and HDRP maximizes visual quality for high-end systems.
+
+Unity's default URP project template has three quality levels: Balanced, High Fidelity, and Performant. These can be seen in **Edit > Project Settings** under the **Quality** section.
+
+  <img alt="Quality Render Pipeline Assets" src="./Documentation~/Images/Quality Render Pipeline Assets.png">
+
+As rendering Gaussian Splats differs from rendering 3D models represented with meshes and textures, a **Renderer Feature** must be added to the **URP Renderer Asset** for each quality level.
+
+1. From the **Project** folder, go to **Assets > Settings**
+2. Select the asset labeled `URP-Balanced-Renderer`
+   
+  <img alt="URP Assets and Universal Renderer Data" src="./Documentation~/Images/URP Assets and Universal Renderer Data.png">
+
+3. In the **Inspector**, under **Renderer Features**, click **Add Renderer Feature**
+4. Select **Gaussian Splat URP Feature**
+
+  <img alt="Add Renderer Feture" src="./Documentation~/Images/Add renderer Feature.png">
+  
+5. Repeat this process for the assets labeled `URP-HighFidelity-Renderer` and `URP-Performant-Renderer`
+
+> [!NOTE]
+> Unity 6 projects require enabling [Compatibility Mode (Render Graph Disabled)](https://docs.unity3d.com/6000.0/Documentation/Manual/urp/compatibility-mode.html) in URP graphics settings to use custom  implementation of Scriptable Render Pass without using the render graph API.
+> 
+> <img alt="Add renderer feature" src="./Documentation~/Images/Compatibility Mode in Project settings marked.png">
+> 
+> The setting is in Project Settings > Graphics > Pipeline Specific Settings > URP > Render Graph.
+
+### High Definition Render Pipeline 
+
+HDRP uses volumes, allowing the scene to be partitioned into areas with their own specific lighting and effects. A Custom Pass Volume can be injected into the render loop, either globally or within a certain area.
+
+1. Go to **Game Object > Create Empty** to add a new Game Object to the scene and name it `GaussianSplatEffect`.
+2. In the **Inspector**, use the **Add Component** button to add a **Custom Pass Volume** either by searching for its name or by following the path: `Scripts > UnityEngine.Rendering.HighDefinition > Custom Pass Volume`
+
+  <img alt="Custom Pass component" src="./Documentation~/Images/Custom Pass component.png">
+
+3. Set the **Mode** to **Global** unless you only intend to use Gaussian Splats in a certain area of the scene, defined by colliders.
+
+  <img alt="Custom Pass Mode" src="./Documentation~/Images/Custom Pass Mode.png">
+
+4. Set the **Injection Point** to either **Before Transparencies** or **After Post Process** (recommended).
+
+  <img alt="Custom Pass Injection point" src="./Documentation~/Images/Custom Pass Injection point.png">
+
 
 ## Usage
 ### Generating
 1. Go to **Window > 404-GEN 3D Generator** to open the generation window
-2. Type your prompt and click Generate. Each generation should take **20 to 30 seconds**
+2. Type your prompt and click Generate. Each generation should take **1 to 2 minutes**
 
 <img alt="Enable unsafe code" src="./Documentation~/Images/Prompts.png">
 
@@ -70,92 +123,13 @@ Use available action icons to:
   * <img alt="Log" src="./Editor/Images/logs.png" height="20">**LOGS** show log messages in a tooltip
   * <img alt="Delete" src="./Editor/Images/delete.png" height="20"> delete prompt entry
   * <img alt="Settings" src="./Editor/Images/settings.png" height="20"> open Project settings for this package
-    
 
+    
 ### Prompts
 A prompt is a short text phrase that 404—GEN interprets to create a 3D Gaussian Splat. In this section, we’ll explore how to craft clear and effective prompts, along with tips to refine your input for the best results.
-Describe a single element or object, rather than an entire scene. A good rule of thumb is something you can look in toward, rather than out toward, regardless of size. "Sky" wouldn't work, but "planet" would.
-Try to be specific but not overly verbose. Prompts between 2 and 12 words in length tend to produce the best results.
-You can experiment with keywords for specific styles or materials. A few examples are:
-  - Anime
-  - Chibi
-  - Clay
-  - Cute
-  - Oil Pastel
-  - Papercraft
-  - Psychedelic
-  - Voxel
-
-> [!NOTE]
-> If the network is busy, the operation will automatically be canceled after 1 minute. Try again
-
-## Rendering pipelines Integration
-Unity offers three main rendering pipelines:
- - Built-In Render Pipeline (Standard) 
- - Universal Render Pipeline (URP) 
- - High Definition Render Pipeline (HDRP)
-
-The main difference lies in their target applications: the Built-In pipeline is the legacy and general-purpose option, URP balances quality and performance across platforms, and HDRP maximizes visual quality for high-end systems.
-As rendering Gaussian splats differs from the regular rendering of 3D models, which are represented with 3D meshes and textures, additional steps need to be taken to integrate 404-Gen 3D generator into URP and HDRP pipelines.
-Rendering needs to be modified at a certain point of the pipeline processing.
-
-### Universal Rendering pipeline integration
-Universal rendering pipeline uses URP Asset files to configure the graphical features and quality settings.
-Render pipeline Asset is a scriptable object that inherits from RenderPipelineAsset.
-
-<img alt="Renderer asset reference in Pipeline asset" src="./Documentation~/Images/Renderer asset reference in Pipeline asset.png">
-
-Along with other Rendering settings it holds a reference to an instance of Universal Renderer Data asset.
-
-<img alt="Add renderer feature" src="./Documentation~/Images/Add renderer Feature.png">
-
-**Universal Renderer Data asset** defines the core settings and configurations for rendering, such as the rendering path (forward or deferred), lighting, shadow quality, and more.
-It acts as a template for the pipeline to manage and control how the scene is rendered across various cameras and lighting conditions.
-
-To extend the renderer's capabilities, **add a renderer feature** - custom rendering code that augments or modifies the render process for the need of rendering Gaussian splats.
-Add a feature **GaussianSplatURPFeature** provided in this package.
-This will enable the rendering of splats that get fetched from the 404-Gen 3D Generator.
-
-> [!NOTE]
-> Unity 6 projects require enabling [Compatibility Mode (Render Graph Disabled)](https://docs.unity3d.com/6000.0/Documentation/Manual/urp/compatibility-mode.html) in URP graphics settings to use custom  implementation of Scriptable Render Pass without using the render graph API.
-> 
-> <img alt="Add renderer feature" src="./Documentation~/Images/Compatibility Mode in Project settings marked.png">
-> 
-> The setting is in Project Settings > Graphics > Pipeline Specific Settings > URP > Render Graph.
-
-Default Unity’s URP project template will have three levels of quality by default. These can be seen in **Project Settings** under the **Quality section**.
-
-<img alt="Quality Render Pipeline Assets" src="./Documentation~/Images/Quality Render Pipeline Assets.png">
-
-Each quality level can be set to use a different Render pipeline asset. This is where you can make performance better on lower-end hardware or make graphics look better on higher-end hardware. Adding a **GaussianSplatURPFeature** needs to be applied to all Universal Render Pipeline assets of each quality level where Gaussian splats are required to be rendered.
-
-<img alt="URP Assets and Universal Renderer Data" src="./Documentation~/Images/URP Assets and Universal Renderer Data.png">
-
-
-
-### High Definition rendering pipeline integration 
-
-HDRP introduces the Volumes approach. Using Volumes allows the scene to be partitioned in areas that have their own specific lighting and effects. HDRP provides a way to customize the render loop using our own implementation of Custom Pass class and injecting the usage of it in a correct place to the rendering process.
-
-Add a new game object to the scene, named *Gaussian Splat Effect*.
-
-<img alt="Custom Pass component" src="./Documentation~/Images/Custom Pass component.png">
-
-In the Inspector window, use the AddComponent button to add a Custom Pass Volume by searching for its name or by following a path
-*Scripts > UnityEngine.Rendering.HighDefinition > Custom Pass volume*.
-If Gaussian splats are intended to be used on a certain area of the scene, it is possible to restrict their processing to a local area defined by colliders and used only when the rendering camera is within that area. Otherwise a volume needs to be set for global usage, throughout the whole scene.
-
-<img alt="Custom Pass Mode" src="./Documentation~/Images/Custom Pass Mode.png">
-
-In added CustomPassVolume component set the Mode to **Global**.
-
-<img alt="HDRP frame graph diagram" src="./Documentation~/Images/HDRP frame graph diagram.png">
-
-At a certain point of the rendering process an injection to that flow can be made and Custom Pass inserted.
-
-<img alt="Custom Pass Injection point" src="./Documentation~/Images/Custom Pass Injection point.png">
-
-On the Custom Pass Volume component, set the Injection Point to **Before Transparencies** or **After Post Process** (recommended).
+* Describe a single element or object, rather than an entire scene. A good rule of thumb is something you can look in toward, rather than out toward, regardless of size. "Sky" wouldn't work, but "planet" would.
+* Try to be specific about colors, styles, and elements
+* Be open-minded and flexible: you may need to re-phrase or add/remove parts of the prompt. Like any skill, prompting can take time to perfect
 
 
 For questions or help troubleshooting, visit the Help Forum in our [Discord Server](https://discord.gg/404gen)
