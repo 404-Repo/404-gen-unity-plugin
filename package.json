@@ -9,7 +9,7 @@
     "repository": "github:404-Repo/404-gen-unity-plugin",
     "unity": "2022.3",
     "unityRelease": "7f1",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "samples": [
         {
             "displayName": "HDRP samples",
