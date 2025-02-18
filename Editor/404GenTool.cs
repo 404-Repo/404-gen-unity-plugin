@@ -968,16 +968,16 @@ namespace GaussianSplatting.Editor
                         SupportPacksUtility.ImportPackage("HDRP Support pack.unitypackage");
                     }
                 }
-                else
-                {
-                    EditorGUILayout.HelpBox(
-                        "Click here to add a preconfigured CustomPassVolume by instantiating a prefab named 'GaussianSplatEffect' from the Resources folder.",
-                        MessageType.Warning);
+            }
+            else
+            {
+                EditorGUILayout.HelpBox(
+                    "Click here to add a preconfigured CustomPassVolume by instantiating a prefab named 'GaussianSplatEffect' from the Resources folder.",
+                    MessageType.Warning);
 
-                    if (GUILayout.Button("Add HDRP custom pass"))
-                    {
-                        AddGaussianSplatEffect();
-                    }
+                if (GUILayout.Button("Add HDRP custom pass"))
+                {
+                    AddGaussianSplatEffect();
                 }
             }
 #endif
