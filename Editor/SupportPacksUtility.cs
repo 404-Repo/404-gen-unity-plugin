@@ -5,7 +5,7 @@ namespace GaussianSplatting.Editor
 {
     public static class SupportPacksUtility
     {
-        private const string SupportPackagesPath = "Assets/404 Gen Unity plugin/HDRP and URP Support Packs/";
+        private const string SupportPackagesPath = "Assets/404-gen-unity-plugin/HDRP and URP Support Packs/";
         private const string AlternativeSupportPackagesPath = "Packages/xyz.404.404-gen-unity-plugin/HDRP and URP Support Packs/";
 
         public static void ImportPackage(string unitypackageName)
