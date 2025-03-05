@@ -12,6 +12,7 @@ using Unity.Mathematics;
 using UnityEditor;
 using UnityEditor.EditorTools;
 using UnityEngine;
+using UnityEngine.Rendering;
 using GaussianSplatRenderer = GaussianSplatting.Runtime.GaussianSplatRenderer;
 
 namespace GaussianSplatting.Editor
@@ -57,6 +58,8 @@ namespace GaussianSplatting.Editor
                 e.Repaint();
         }
 
+
+
         public void OnEnable()
         {
             m_ExportBakeTransform = EditorPrefs.GetBool(kPrefExportBake, false);
@@ -77,6 +80,24 @@ namespace GaussianSplatting.Editor
             m_PropCSSplatUtilities = serializedObject.FindProperty("m_CSSplatUtilities");
 
             s_AllEditors.Add(this);
+            CacheComponents();
+        }
+        
+        GaussianSplatRenderer m_gaussianSplatRenderer;
+        GameObject m_go;
+        MeshFilter m_meshFilter;
+        MeshCollider m_meshCollider;
+        MeshRenderer m_meshRenderer;
+        private void CacheComponents()
+        {
+	        m_gaussianSplatRenderer = (target as GaussianSplatRenderer);
+	        if (m_gaussianSplatRenderer != null)
+	        {
+		        m_go = m_gaussianSplatRenderer.gameObject;
+		        m_meshFilter = m_go.GetComponent<MeshFilter>();
+		        m_meshCollider = m_go.GetComponent<MeshCollider>();
+		        m_meshRenderer = m_go.GetComponent<MeshRenderer>();
+	        }
         }
 
         public void OnDisable()
@@ -91,6 +112,8 @@ namespace GaussianSplatting.Editor
                 return;
 
             serializedObject.Update();
+            
+            EditorGUI.BeginChangeCheck();
 
             GUILayout.Label("Data Asset", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(m_PropAsset);
@@ -144,7 +167,11 @@ namespace GaussianSplatting.Editor
                 MultiEditGUI();
             }
 
-            serializedObject.ApplyModifiedProperties();
+            if (EditorGUI.EndChangeCheck())
+            {
+	            serializedObject.ApplyModifiedProperties();
+	            EditorUtility.SetDirty(target);
+            }
         }
 
         void EditCameras(GaussianSplatRenderer gs)
@@ -345,26 +372,75 @@ namespace GaussianSplatting.Editor
                 }
             }
 
-            EditorGUILayout.Space();
-            if (GUILayout.Button("Add Mesh collider"))
-            {
-                AddMeshCollider(gs);
-            }
-            
-            if (GUILayout.Button("Remove Mesh collider"))
-            {
-                var meshCollider = gs.gameObject.GetComponent<MeshCollider>();
-                if (meshCollider)
-                {
-                    DestroyImmediate(meshCollider);
-                }
-                
-                var meshFilter = gs.gameObject.GetComponent<MeshFilter>();
-                if (meshCollider)
-                {
-                    DestroyImmediate(meshFilter);
-                }
-            }
+	        EditorGUILayout.Space();
+	        GUILayout.Label("Collider", EditorStyles.boldLabel);
+
+	        using (new EditorGUI.DisabledScope(m_meshCollider != null))
+	        {
+		        if (GUILayout.Button("Add Mesh collider"))
+		        {
+			        AddMeshCollider(gs);
+			        EditorUtility.SetDirty(this);
+		        }
+	        }
+
+	        using (new EditorGUI.DisabledScope(m_meshCollider == null))
+	        {
+		        if (GUILayout.Button("Remove Mesh collider"))
+		        {
+			        DestroyImmediate(m_meshCollider);
+			        m_meshCollider = null;
+
+			        if (m_meshFilter && !m_meshRenderer)
+			        {
+				        DestroyImmediate(m_meshFilter);
+				        m_meshFilter = null;
+			        }
+			        EditorUtility.SetDirty(this);
+		        }
+	        }
+
+	        EditorGUILayout.Space();
+	        GUILayout.Label("Shadow", EditorStyles.boldLabel);
+
+	        using (new EditorGUI.DisabledScope(m_meshRenderer != null))
+	        {
+		        if (GUILayout.Button("Add shadow"))
+		        {
+			        m_meshRenderer = gs.gameObject.AddComponent<MeshRenderer>();
+		        
+			        Material meshRendererMaterial;
+			        #if GS_ENABLE_URP
+			        meshRendererMaterial = Resources.Load<Material>("ShadowMaterialURP");
+			        #elif GS_ENABLE_HDRP
+			        meshRendererMaterial = Resources.Load<Material>("ShadowMaterialHDRP");
+			        #endif
+
+			        if (meshRendererMaterial != null)
+			        {
+				        m_meshRenderer.material = meshRendererMaterial;
+				        m_meshRenderer.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
+			        }
+			        
+			        EditorUtility.SetDirty(this);
+		        }
+	        }
+
+	        using (new EditorGUI.DisabledScope(m_meshRenderer == null))
+	        {
+		        if (GUILayout.Button("Remove shadow"))
+		        {
+			        DestroyImmediate(m_meshRenderer);
+			        m_meshRenderer = null;
+			        
+			        if (m_meshFilter && !m_meshCollider)
+			        {
+				        DestroyImmediate(m_meshFilter);
+				        m_meshFilter = null;
+			        }
+			        EditorUtility.SetDirty(this);
+		        }
+	        }
         }
 
         static void DrawSeparator()
