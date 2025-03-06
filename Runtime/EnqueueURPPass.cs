@@ -27,20 +27,19 @@ namespace GaussianSplatting.Runtime
             var system = GaussianSplatRenderSystem.instance;
             if (!system.GatherSplatsForCamera(cam))
                 return;
-
+            
+            #if !UNITY_6000_0_OR_NEWER
             CommandBuffer cmb = system.InitialClearCmdBuffer(cam);
             m_Pass.m_Cmb = cmb;
-            
+            #endif
+			
             // Use the EnqueuePass method to inject a custom render pass
-            var scriptableRenderer = cam.GetUniversalAdditionalCameraData().scriptableRenderer;
+			var scriptableRenderer = cam.GetUniversalAdditionalCameraData().scriptableRenderer;
+			#if !UNITY_6000_0_OR_NEWER
             m_Pass.m_Renderer = scriptableRenderer;
+            #endif
+            
             scriptableRenderer.EnqueuePass(m_Pass);
-        }
-        
-        private void OnDisable()
-        {
-            RenderPipelineManager.beginCameraRendering -= OnBeginCamera;
-            m_Pass?.Dispose();
         }
 #endif
     }
