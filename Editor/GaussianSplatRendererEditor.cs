@@ -409,11 +409,13 @@ namespace GaussianSplatting.Editor
 		        {
 			        m_meshRenderer = gs.gameObject.AddComponent<MeshRenderer>();
 		        
-			        Material meshRendererMaterial;
+			        Material meshRendererMaterial = null;
 			        #if GS_ENABLE_URP
 			        meshRendererMaterial = Resources.Load<Material>("ShadowMaterialURP");
 			        #elif GS_ENABLE_HDRP
 			        meshRendererMaterial = Resources.Load<Material>("ShadowMaterialHDRP");
+			        #else
+			        meshRendererMaterial = Resources.Load<Material>("ShadowMaterialStandard");
 			        #endif
 
 			        if (meshRendererMaterial != null)
@@ -560,7 +562,7 @@ namespace GaussianSplatting.Editor
             mesh.SetVertices(verts);
             mesh.SetTriangles(tris, 0);
             mesh.SetNormals(normals);
-            mesh.name = gs.gameObject.name;
+            mesh.name = $"{gs.gameObject.name} collider mesh";
 
             var gameObject = gs.gameObject;
             
