@@ -84,19 +84,21 @@ namespace GaussianSplatting.Editor
         }
         
         GaussianSplatRenderer m_gaussianSplatRenderer;
-        GameObject m_go;
+        GameObject m_gameobject;
+        Mesh m_mesh;
         MeshFilter m_meshFilter;
         MeshCollider m_meshCollider;
         MeshRenderer m_meshRenderer;
+        
         private void CacheComponents()
         {
 	        m_gaussianSplatRenderer = (target as GaussianSplatRenderer);
 	        if (m_gaussianSplatRenderer != null)
 	        {
-		        m_go = m_gaussianSplatRenderer.gameObject;
-		        m_meshFilter = m_go.GetComponent<MeshFilter>();
-		        m_meshCollider = m_go.GetComponent<MeshCollider>();
-		        m_meshRenderer = m_go.GetComponent<MeshRenderer>();
+		        m_gameobject = m_gaussianSplatRenderer.gameObject;
+		        m_meshFilter = m_gameobject.GetComponent<MeshFilter>();
+		        m_meshCollider = m_gameobject.GetComponent<MeshCollider>();
+		        m_meshRenderer = m_gameobject.GetComponent<MeshRenderer>();
 	        }
         }
 
@@ -379,7 +381,11 @@ namespace GaussianSplatting.Editor
 	        {
 		        if (GUILayout.Button("Add Mesh collider"))
 		        {
-			        AddMeshCollider(gs);
+			        if (m_meshFilter == null)
+			        {
+				        AddMeshFilter(gs.gameObject, gs.asset);
+			        }
+			        AddMeshCollider(gs.gameObject, m_mesh);
 			        EditorUtility.SetDirty(this);
 		        }
 	        }
@@ -407,6 +413,11 @@ namespace GaussianSplatting.Editor
 	        {
 		        if (GUILayout.Button("Add shadow"))
 		        {
+			        if (m_meshFilter == null)
+			        {
+				        AddMeshFilter(gs.gameObject, gs.asset);
+			        }
+			        
 			        m_meshRenderer = gs.gameObject.AddComponent<MeshRenderer>();
 		        
 			        Material meshRendererMaterial = null;
@@ -420,7 +431,7 @@ namespace GaussianSplatting.Editor
 
 			        if (meshRendererMaterial != null)
 			        {
-				        m_meshRenderer.material = meshRendererMaterial;
+				        m_meshRenderer.sharedMaterial = meshRendererMaterial;
 				        m_meshRenderer.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
 			        }
 			        
@@ -444,6 +455,8 @@ namespace GaussianSplatting.Editor
 		        }
 	        }
         }
+
+
 
         static void DrawSeparator()
         {
@@ -542,45 +555,45 @@ namespace GaussianSplatting.Editor
             Debug.Log($"Exported PLY {path} with {aliveCount:N0} splats");
         }
 
-        private static void AddMeshCollider(GaussianSplatRenderer gs)
+        
+        
+        private void AddMeshFilter(GameObject gameObject, GaussianSplatAsset asset)
         {
-            var asset = gs.asset;
-            var pos = asset.posData.GetData<float>();
-            
-            var posArray = pos.ToArray();
-            var splatPositions = ConvertToVector3Array(posArray);
+	        var pos = asset.posData.GetData<float>();
 
-            //hull generation algorithm
-            var convexHullCalculator = new ConvexHullCalculator();
-            List<Vector3> verts = new List<Vector3>();
-            List<int> tris = new List<int>();
-            List<Vector3> normals = new List<Vector3>();
-            convexHullCalculator.GenerateHull(splatPositions.ToList(), true, ref verts, ref tris, ref normals);
+	        var posArray = pos.ToArray();
+	        var splatPositions = ConvertToVector3Array(posArray);
 
-            //add mesh collider component and set it up
-            var mesh = new Mesh();
-            mesh.SetVertices(verts);
-            mesh.SetTriangles(tris, 0);
-            mesh.SetNormals(normals);
-            mesh.name = $"{gs.gameObject.name} collider mesh";
+	        //hull generation algorithm
+	        var convexHullCalculator = new ConvexHullCalculator();
+	        List<Vector3> verts = new List<Vector3>();
+	        List<int> tris = new List<int>();
+	        List<Vector3> normals = new List<Vector3>();
+	        convexHullCalculator.GenerateHull(splatPositions.ToList(), true, ref verts, ref tris, ref normals);
 
-            var gameObject = gs.gameObject;
-            
-            var meshFilter = gameObject.GetComponent<MeshFilter>();
-            if (!meshFilter)
+	        //add mesh collider component and set it up
+	        m_mesh = new Mesh();
+	        m_mesh.SetVertices(verts);
+	        m_mesh.SetTriangles(tris, 0);
+	        m_mesh.SetNormals(normals);
+	        m_mesh.name = $"{gameObject.name} collider mesh";
+
+	        if (!m_meshFilter)
+	        {
+		        m_meshFilter = gameObject.AddComponent<MeshFilter>();
+	        }
+
+	        m_meshFilter.sharedMesh = m_mesh;
+        }
+
+        private void AddMeshCollider(GameObject gameObject, Mesh mesh)
+        {
+	        if (!m_meshCollider)
             {
-                meshFilter = gameObject.AddComponent<MeshFilter>();
+	            m_meshCollider = gameObject.AddComponent<MeshCollider>();
             }
-            
-            meshFilter.sharedMesh = mesh;
-
-            var meshCollider = gameObject.GetComponent<MeshCollider>();
-            if (!meshCollider)
-            {
-                meshCollider = gameObject.AddComponent<MeshCollider>();
-            }
-            meshCollider.sharedMesh = mesh;
-            meshCollider.convex = true;
+            m_meshCollider.sharedMesh = mesh;
+            m_meshCollider.convex = true;
         }
 
         private static Vector3[] ConvertToVector3Array(float[] floatArray)
