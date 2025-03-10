@@ -383,7 +383,7 @@ namespace GaussianSplatting.Editor
 		        {
 			        if (m_meshFilter == null)
 			        {
-				        AddMeshFilter(gs.gameObject, gs.asset);
+				        AddMeshFilter(gs.gameObject, gs);
 			        }
 			        AddMeshCollider(gs.gameObject, m_mesh);
 			        EditorUtility.SetDirty(this);
@@ -415,7 +415,7 @@ namespace GaussianSplatting.Editor
 		        {
 			        if (m_meshFilter == null)
 			        {
-				        AddMeshFilter(gs.gameObject, gs.asset);
+				        AddMeshFilter(gs.gameObject, gs);
 			        }
 			        
 			        m_meshRenderer = gs.gameObject.AddComponent<MeshRenderer>();
@@ -557,12 +557,9 @@ namespace GaussianSplatting.Editor
 
         
         
-        private void AddMeshFilter(GameObject gameObject, GaussianSplatAsset asset)
+        private void AddMeshFilter(GameObject gameObject, GaussianSplatRenderer gs)
         {
-	        var pos = asset.posData.GetData<float>();
-
-	        var posArray = pos.ToArray();
-	        var splatPositions = ConvertToVector3Array(posArray);
+	        var splatPositions = GetBakedSplatPositions(gs);
 
 	        //hull generation algorithm
 	        var convexHullCalculator = new ConvexHullCalculator();
@@ -644,6 +641,52 @@ namespace GaussianSplatting.Editor
 
                 quad.transform.localScale = scale;
             }
+        }
+        
+        static Vector3[] GetBakedSplatPositions(GaussianSplatRenderer gs)
+        {
+            int kSplatSize = UnsafeUtility.SizeOf<GaussianSplatAssetCreator.InputSplatData>();
+            using var gpuData = new GraphicsBuffer(GraphicsBuffer.Target.Structured, gs.splatCount, kSplatSize);
+
+            if (!gs.EditExportData(gpuData, false))
+                return null;
+
+            GaussianSplatAssetCreator.InputSplatData[] data = new GaussianSplatAssetCreator.InputSplatData[gpuData.count];
+            gpuData.GetData(data);
+
+            var gpuDeleted = gs.GpuEditDeleted;
+            uint[] deleted = new uint[gpuDeleted.count];
+            gpuDeleted.GetData(deleted);
+
+            // count non-deleted splats
+            int aliveCount = 0;
+            for (int i = 0; i < data.Length; ++i)
+            {
+                int wordIdx = i >> 5;
+                int bitIdx = i & 31;
+                bool isDeleted = (deleted[wordIdx] & (1u << bitIdx)) != 0;
+                bool isCutout = data[i].nor.sqrMagnitude > 0;
+                if (!isDeleted && !isCutout)
+                    ++aliveCount;
+            }
+
+            Vector3[] bakedSplatPositions = new Vector3[aliveCount];
+
+            int bakedSplatPosIndex = 0;
+
+            for (int i = 0; i < data.Length; ++i)
+            {
+                int wordIdx = i >> 5;
+                int bitIdx = i & 31;
+                bool isDeleted = (deleted[wordIdx] & (1u << bitIdx)) != 0;
+                bool isCutout = data[i].nor.sqrMagnitude > 0;
+                if (!isDeleted && !isCutout)
+                {
+	                bakedSplatPositions[bakedSplatPosIndex++] = data[i].pos;
+                }
+            }
+
+            return bakedSplatPositions;
         }
 
     }
