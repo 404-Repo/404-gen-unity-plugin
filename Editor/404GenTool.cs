@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Net.WebSockets;
 using Newtonsoft.Json;
 using GaussianSplatting.Runtime;
+using Unity.EditorCoroutines.Editor;
 using Object = UnityEngine.Object;
 
 #if GS_ENABLE_URP
@@ -36,7 +37,7 @@ namespace GaussianSplatting.Editor
         // holds data specific to this editor window
         private WebSocketEditorWindowData windowData;
 
-        [MenuItem("Window/404-GEN 3D Generator")]
+        [MenuItem("Window/404-GEN/404-GEN 3D Generator")]
         public static void ShowWindow()
         {
             WebSocketEditorWindow window = GetWindow<WebSocketEditorWindow>("404-GEN 3D Generator");
@@ -358,6 +359,7 @@ namespace GaussianSplatting.Editor
 
         private float m_inputAreaWidth = 480;
         private float m_inputAreaHeight = 60;
+        private int selectedTab = 0;
         private void DrawPromptInput()
         {
             GUILayout.BeginVertical();
@@ -376,6 +378,14 @@ namespace GaussianSplatting.Editor
             var inputFieldWidth = Math.Min(m_inputAreaWidth, position.width) - 20;
             m_inputAreaHeight = m_promptTextAreaStyle.CalcHeight(new GUIContent(m_inputText), inputFieldWidth);
             m_inputText = EditorGUILayout.TextArea(m_inputText, m_promptTextAreaStyle, GUILayout.MaxHeight(m_inputAreaHeight));
+            GUILayout.EndHorizontal();
+            
+            GUILayout.Space(4);
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            
+            GaussianSplattingPackageSettings.Instance.GenerationOption = (MeshConversionUtility.GenerationOption) GUILayout.Toolbar((int)GaussianSplattingPackageSettings.Instance.GenerationOption, new[] { "Gaussian Splat", "Mesh model" }, GUILayout.Width(300));
+            GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             
             GUILayout.Space(4);
@@ -1106,31 +1116,90 @@ namespace GaussianSplatting.Editor
                     // If there are assets, decode and save the PLY file
                     if (!string.IsNullOrEmpty(update.results?.assets))
                     {
-                        if (SavePlyFile(update.results.assets, out var log))
+                        switch (promptItem.GenerationOption)
                         {
-                            promptItem.Log(log);
-                            GameObject newObject = new GameObject(promptItem.prompt);
-                            promptItem.gameobject = newObject;
+                            case MeshConversionUtility.GenerationOption.GaussianSplat:
+                                if (SavePlyFile(update.results.assets, out var log))
+                                {
+                                    promptItem.Log(log);
+                                    GameObject newObject = new GameObject(promptItem.prompt);
+                                    promptItem.gameobject = newObject;
                         
-                            var renderer = newObject.AddComponent<GaussianSplatRenderer>();
-                            promptItem.renderer = renderer;
+                                    var renderer = newObject.AddComponent<GaussianSplatRenderer>();
+                                    promptItem.renderer = renderer;
                         
-                            newObject.SetActive(false);
-                            newObject.SetActive(true);
-                            var asset = m_creator.CreateAsset(m_plyFilePath);
-                            renderer.m_Asset = asset;
-                            EditorUtility.SetDirty(asset);
+                                    newObject.SetActive(false);
+                                    newObject.SetActive(true);
+                                    var asset = m_creator.CreateAsset(m_plyFilePath);
+                                    renderer.m_Asset = asset;
+                                    EditorUtility.SetDirty(asset);
                     
-                            promptItem.isActive = false;
-                            promptItem.promptStatus = PromptStatus.Completed;
+                                    promptItem.isActive = false;
+                                    promptItem.promptStatus = PromptStatus.Completed;
+                                }
+                                else
+                                {
+                                    //failed save
+                                    promptItem.Log(log);
+                                    promptItem.promptStatus = PromptStatus.Failed;
+                                    promptItem.isActive = false;
+                                }
+                                break;
+                            case MeshConversionUtility.GenerationOption.MeshModel:
+                                byte[] plyData = Convert.FromBase64String(update.results.assets);
+                                
+                                EditorCoroutineUtility.StartCoroutineOwnerless( 
+                                    MeshConversionUtility.SendBytesToServer(plyData, promptItem.prompt + ".ply", onResponseReceived: (byte[] meshData)=>
+                                {
+                                    try
+                                    {
+                                        var modelName = "generated_mesh_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                
+                                        var folderPath = GaussianSplattingPackageSettings.Instance.ConvertedModelsPath;
+
+                                        if (!Directory.Exists(folderPath))
+                                        {
+                                            Directory.CreateDirectory(folderPath);
+                                        }
+                                        AssetDatabase.CreateFolder(folderPath, modelName);
+                
+                                        var meshFileName = $"{modelName}.fbx";
+                                        var meshPath = Path.Combine(folderPath, $"{modelName}/{meshFileName}")
+                                            .Replace("\\", "/");
+
+                                        GaussianSplattingPackageSettings.Instance.ImportedMeshPath = meshPath;
+
+                                        File.WriteAllBytes(meshPath, meshData);
+                                        AssetDatabase.ImportAsset(meshPath);
+                                        AssetDatabase.Refresh();
+                
+                                        var mesh = AssetDatabase.LoadAssetAtPath<Object>(meshPath);
+                                        var instance = Instantiate(mesh) as GameObject;
+                                        if (instance != null)
+                                        {
+                                            instance.name = instance.name.Replace("(Clone)", "(Mesh)");
+                                        }
+
+                                        promptItem.Log("mesh file saved at: " + meshPath);
+                                        
+                                        promptItem.gameobject = instance;
+
+                                        promptItem.isActive = false;
+                                        promptItem.promptStatus = PromptStatus.Completed;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        promptItem.Log("Error saving PLY file: " + ex.Message);
+                                        promptItem.promptStatus = PromptStatus.Failed;
+                                        promptItem.isActive = false;
+                                    }
+                                }));
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
                         }
-                        else
-                        {
-                            //failed save
-                            promptItem.Log(log);
-                            promptItem.promptStatus = PromptStatus.Failed;
-                            promptItem.isActive = false;
-                        }
+                        
+                        
                     }
                     break;
                 }
@@ -1159,6 +1228,42 @@ namespace GaussianSplatting.Editor
                 AssetDatabase.Refresh();
 
                 log = "PLY file saved at: " + m_plyFilePath;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                log = "Error saving PLY file: " + ex.Message;
+                return false;
+            }
+        }
+        private bool SaveMeshFile(byte[] meshData, out string log)
+        {
+            try
+            {
+                //todo: remove data path
+                var modelName = "generated_mesh_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                
+                var folderPath = GaussianSplattingPackageSettings.Instance.ConvertedModelsPath;
+                AssetDatabase.CreateFolder(folderPath, modelName);
+                
+                var meshFileName = $"{modelName}.fbx";
+                var meshPath = Path.Combine(folderPath, $"{modelName}/{meshFileName}")
+                    .Replace("\\", "/");
+
+                GaussianSplattingPackageSettings.Instance.ImportedMeshPath = meshPath;
+
+                File.WriteAllBytes(meshPath, meshData);
+                AssetDatabase.ImportAsset(meshPath);
+                AssetDatabase.Refresh();
+                
+                var mesh = AssetDatabase.LoadAssetAtPath<Object>(meshPath);
+                var instance = Instantiate(mesh) as GameObject;
+                if (instance != null)
+                {
+                    instance.name = instance.name.Replace("(Clone)", "(Mesh)");
+                }
+
+                log = "mesh file saved at: " + meshPath;
                 return true;
             }
             catch (Exception ex)
