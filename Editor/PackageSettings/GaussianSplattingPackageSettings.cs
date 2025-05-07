@@ -1,5 +1,5 @@
-﻿using System.IO;
-using UnityEngine;
+﻿using UnityEngine;
+using static MeshConversionUtility;
 
 namespace GaussianSplatting.Editor
 {
@@ -16,7 +16,18 @@ namespace GaussianSplatting.Editor
         public bool UsePromptTimeout = true;
         public int PromptTimeoutInSeconds = 60;
         public bool ConfirmDeletes = true;
+
+        public GenerationOption GenerationOption = GenerationOption.GaussianSplat;
+        //todo: set default service url here
+        public string ConversionServiceUrl = "http://localhost:5000/process";
+        public string ConvertedModelsPath = "Assets/Export";
+        public float MinDetailSize = 0.01f;
+        public float Simplify = 0f;
+        public int AngleLimit = 60;
+        public MeshConversionTextureSize TextureSize;
+        public string ImportedMeshPath;
         
+        //singleton
         public static GaussianSplattingPackageSettings Instance
         {
             get
@@ -32,6 +43,14 @@ namespace GaussianSplatting.Editor
 
                 return _instance;
             }
+        }
+
+        public void SetDefaultConversionParameters()
+        {
+            MinDetailSize = 0.01f;
+            Simplify = 0f;
+            AngleLimit = 60;
+            TextureSize = MeshConversionTextureSize.Size2048;
         }
     }
 }
