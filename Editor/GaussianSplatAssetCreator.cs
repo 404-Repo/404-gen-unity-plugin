@@ -182,7 +182,9 @@ namespace GaussianSplatting.Editor
             NativeArray<byte> verticesRawData;
             try
             {
-                PLYFileReader.ReadFile(plyPath, out splatCount, out vertexStride, out _, out verticesRawData, m_PlyReadOverrideVertexStride);
+                PLYFileReader.ReadFileHeader(plyPath, out splatCount, out vertexStride, out var attrNames);
+                bool overrideVertexStride = UnsafeUtility.SizeOf<InputSplatData>() != vertexStride;
+                PLYFileReader.ReadFile(plyPath, out splatCount, out vertexStride, out _, out verticesRawData, overrideVertexStride);
             }
             catch (Exception ex)
             {
