@@ -1236,42 +1236,6 @@ namespace GaussianSplatting.Editor
                 return false;
             }
         }
-        private bool SaveMeshFile(byte[] meshData, out string log)
-        {
-            try
-            {
-                //todo: remove data path
-                var modelName = "generated_mesh_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                
-                var folderPath = GaussianSplattingPackageSettings.Instance.ConvertedModelsPath;
-                AssetDatabase.CreateFolder(folderPath, modelName);
-                
-                var meshFileName = $"{modelName}.fbx";
-                var meshPath = Path.Combine(folderPath, $"{modelName}/{meshFileName}")
-                    .Replace("\\", "/");
-
-                GaussianSplattingPackageSettings.Instance.ImportedMeshPath = meshPath;
-
-                File.WriteAllBytes(meshPath, meshData);
-                AssetDatabase.ImportAsset(meshPath);
-                AssetDatabase.Refresh();
-                
-                var mesh = AssetDatabase.LoadAssetAtPath<Object>(meshPath);
-                var instance = Instantiate(mesh) as GameObject;
-                if (instance != null)
-                {
-                    instance.name = instance.name.Replace("(Clone)", "(Mesh)");
-                }
-
-                log = "mesh file saved at: " + meshPath;
-                return true;
-            }
-            catch (Exception ex)
-            {
-                log = "Error saving PLY file: " + ex.Message;
-                return false;
-            }
-        }
 
         // Ensure the WebSocket is closed when the window is destroyed
         private void OnDestroy()
