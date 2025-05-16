@@ -20,12 +20,17 @@ namespace GaussianSplatting
             _ply = null;
             _mesh = null;
             _instance = null;
-            ValidateConversionFolderPath(Path.Join(Application.dataPath.Replace("Assets", ""), GaussianSplattingPackageSettings.Instance.ConvertedModelsPath));
+            ValidateConversionFolderPath();
         }
 
         private static GaussianSplatRenderer _gaussianSplatRenderer;
         private static bool _exportInWorldSpace;
-        
+
+        private void OnFocus()
+        {
+            ValidateConversionFolderPath();
+        }
+
         public static void ConvertGaussianSplat(GaussianSplatRenderer gaussianSplatRenderer, bool exportInWorldSpace)
         {
             _gaussianSplatRenderer = gaussianSplatRenderer;
@@ -35,6 +40,7 @@ namespace GaussianSplatting
 
         private void OnGUI()
         {
+            EditorGUILayout.BeginVertical(GUILayout.MinHeight(350));
             DrawConversionDescription();
             EditorGUILayout.Space();
 
@@ -45,7 +51,7 @@ namespace GaussianSplatting
             EditorGUILayout.Space();
             
             MeshConversionUtility.DrawMeshConversionOptions();
-            EditorGUILayout.Space();
+            EditorGUILayout.EndVertical();
 
             DrawConversionButton();
             GUILayout.Space(16);
@@ -85,7 +91,7 @@ namespace GaussianSplatting
 
             if (_gaussianSplatRenderer == null)
             {
-                EditorGUILayout.HelpBox("Assign Gaussian Splat Renderer component", MessageType.Warning);
+                EditorGUILayout.HelpBox("Assign Gaussian Splat Renderer component", MessageType.Error);
             }
         }
 
@@ -130,26 +136,51 @@ namespace GaussianSplatting
             {
                 EditorGUILayout.HelpBox(_covertedFilesPathError, MessageType.Error);
             }
+            
+            if (settings.ConvertedModelsPath != null && _folderWithinAssets && !_folderExists)
+            {
+                if (GUILayout.Button("Create folder", GUILayout.Width(120)))
+                {
+                    FolderUtility.CreateFolderPath(settings.ConvertedModelsPath);
+                    ValidateConversionFolderPath();
+                }
+            }
         }
+        
 
+
+        private static bool _folderWithinAssets;
+        private static bool _folderExists;
+
+        private static void ValidateConversionFolderPath()
+        {
+            ValidateConversionFolderPath(Path.Join(Application.dataPath.Replace("Assets", ""),
+                GaussianSplattingPackageSettings.Instance.ConvertedModelsPath));
+        }
         private static void ValidateConversionFolderPath(string selectedPath)
         {
-            var valid = selectedPath.StartsWith(Application.dataPath) && Directory.Exists(selectedPath);
-            _covertedFilesPathError = !valid ? "Conversion files folder must be within project's Assets folder!" : null;
+            _folderWithinAssets = selectedPath.StartsWith(Application.dataPath);
+            _folderExists = Directory.Exists(selectedPath);
+            _covertedFilesPathError = 
+                !_folderWithinAssets ? "Conversion files folder must be within project's Assets folder!" : 
+                !_folderExists ? "Conversion files folder does not exist" : 
+                null;
         }
 
         private static string _conversionStatus = null;
+        private static bool _conversionProcessing = false;
 
         private static Object _ply, _mesh;
         private static GameObject _instance;
         private void DrawConversionButton()
         {
-            using (new EditorGUI.DisabledScope(_gaussianSplatRenderer == null || _conversionStatus != null))
+            using (new EditorGUI.DisabledScope(_gaussianSplatRenderer == null || !_folderExists || !_folderWithinAssets || _conversionProcessing))
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Start conversion to Mesh", GUILayout.Width(240), GUILayout.Height(40)))
                 {
+                    _conversionProcessing = true;
                     _conversionStatus = "Started";
                     EditorCoroutineUtility.StartCoroutineOwnerless(MeshConversionCoroutine());
                 }
@@ -182,8 +213,17 @@ namespace GaussianSplatting
             _conversionStatus = "Mesh conversion started.";
             var modelName = _gaussianSplatRenderer.asset.name;
             var folderPath = GaussianSplattingPackageSettings.Instance.ConvertedModelsPath;
+            var modelFolderPath = Path.Combine(folderPath, modelName);
 
-            AssetDatabase.CreateFolder(folderPath, modelName);
+            if (!AssetDatabase.IsValidFolder(modelFolderPath))
+            {
+                Debug.Log($"Creating folder {modelName} in {folderPath}");
+                AssetDatabase.CreateFolder(folderPath, modelName);
+            }
+            else
+            {
+                Debug.Log($"Folder exists {modelName}");
+            }
             
             var plyFileName = $"{modelName}.ply";
             var meshFileName = $"{modelName}.fbx";
@@ -222,11 +262,21 @@ namespace GaussianSplatting
                         if (_instance != null)
                         {
                             _instance.name = _instance.name.Replace("(Clone)", "(Mesh)");
+                            
+                            _instance.transform.position = _gaussianSplatRenderer.transform.position;
+                            
+                            _instance.transform.Rotate(new Vector3(90f,0f,0f));
+                            
+                            //todo: destroy instead?
+                            //Destroy(_gaussianSplatRenderer.gameObject);
+                            _gaussianSplatRenderer.gameObject.SetActive(false);    
                         }
+                        _conversionProcessing = false;
                     },
                     onError: errorMessage =>
                     {
                         _conversionStatus = errorMessage;
+                        _conversionProcessing = false;
                     }));
         }
     }

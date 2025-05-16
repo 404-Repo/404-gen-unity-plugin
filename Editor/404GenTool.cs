@@ -1213,10 +1213,10 @@ namespace GaussianSplatting.Editor
             {
                 byte[] plyBytes = Convert.FromBase64String(base64Data);
                 
-                string tempPath = Path.Join(Application.dataPath.Replace("/Assets", ""), GaussianSplattingPackageSettings.Instance.GeneratedModelsPath);
-                if (!Directory.Exists(tempPath))
+                string tempPath = GaussianSplattingPackageSettings.Instance.GeneratedModelsPath;
+                if (!FolderUtility.FolderExists(GaussianSplattingPackageSettings.Instance.GeneratedModelsPath))
                 {
-                    Directory.CreateDirectory(tempPath);
+                    FolderUtility.CreateFolderPath(GaussianSplattingPackageSettings.Instance.GeneratedModelsPath);
                 }
 
                 m_plyFilePath = Path.Combine(tempPath, "generated_model_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".ply");

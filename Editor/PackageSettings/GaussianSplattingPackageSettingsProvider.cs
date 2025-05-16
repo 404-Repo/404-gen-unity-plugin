@@ -40,13 +40,19 @@ namespace GaussianSplatting.Editor
                         {
                             if (selectedPath.StartsWith(Application.dataPath))
                             {
-                                if (!Directory.Exists(selectedPath))
+                                var relativePath = FolderUtility.GetAssetsRelativePath(selectedPath);
+                                
+                                if (!FolderUtility.FolderExists(relativePath))
                                 {
-                                    Directory.CreateDirectory(selectedPath);
+                                    FolderUtility.CreateFolderPath(relativePath);
                                 }
-                                settings.GeneratedModelsPath = selectedPath
-                                    .Replace(Application.dataPath, "")
-                                    .Replace("\\", "/");
+
+                                settings.GeneratedModelsPath = relativePath;
+
+                                //todo:remove
+                                // settings.GeneratedModelsPath = selectedPath
+                                //     .Replace(Application.dataPath, "Assets")
+                                //     .Replace("\\", "/");
                             }
                             else
                             {
