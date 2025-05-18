@@ -14,13 +14,13 @@ namespace GaussianSplatting.Editor
         public bool DeleteAssociatedFilesWithPrompt = true;
 
         public bool UsePromptTimeout = true;
-        public int PromptTimeoutInSeconds = 60;
+        public int PromptTimeoutInSeconds = 90;
         public bool ConfirmDeletes = true;
 
         public GenerationOption GenerationOption = GenerationOption.GaussianSplat;
         //todo: set default service url here
         public string ConversionServiceUrl = "http://34.141.10.161/process";
-        public string ConvertedModelsPath = "Assets/GeneratedModels/Export";
+        public string ConvertedModelsPath = "Assets/GeneratedModels/Mesh";
         public float MinDetailSize = 0.01f;
         public float Simplify = 0f;
         public int AngleLimit = 60;

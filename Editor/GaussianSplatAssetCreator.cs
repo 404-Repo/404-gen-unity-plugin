@@ -79,11 +79,10 @@ namespace GaussianSplatting.Editor
         {
             m_ErrorMessage = null;
             var relativeOutputPath = GaussianSplattingPackageSettings.Instance.GeneratedModelsPath + "/GaussianAssets";
-            string fullOutputPath = Application.dataPath + relativeOutputPath;
 
-            if (!Directory.Exists(fullOutputPath))
+            if (!FolderUtility.FolderExists(relativeOutputPath))
             {
-                Directory.CreateDirectory(fullOutputPath);
+                FolderUtility.CreateFolderPath(relativeOutputPath);
             }
 
             EditorUtility.DisplayProgressBar(kProgressTitle, "Reading data files", 0.0f);
@@ -124,7 +123,7 @@ namespace GaussianSplatting.Editor
             asset.name = baseName;
 
             var dataHash = new Hash128((uint)asset.splatCount, (uint)asset.formatVersion, 0, 0);
-            string basePath = "Assets" + Path.Join(relativeOutputPath, baseName);
+            string basePath = Path.Join(relativeOutputPath, baseName);
             string pathChunk = basePath + "_chk.bytes";
             string pathPos = basePath + "_pos.bytes";
             string pathOther = basePath + "_oth.bytes";
@@ -157,7 +156,7 @@ namespace GaussianSplatting.Editor
                 AssetDatabase.LoadAssetAtPath<TextAsset>(pathCol),
                 AssetDatabase.LoadAssetAtPath<TextAsset>(pathSh));
 
-            var assetPath = $"Assets/{relativeOutputPath}/{baseName}.asset";
+            var assetPath = $"{relativeOutputPath}/{baseName}.asset";
             var savedAsset = CreateOrReplaceAsset(asset, assetPath);
 
             EditorUtility.DisplayProgressBar(kProgressTitle, "Saving assets", 0.99f);
