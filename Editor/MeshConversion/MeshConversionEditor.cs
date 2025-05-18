@@ -258,18 +258,21 @@ namespace GaussianSplatting
                         AssetDatabase.Refresh();
                         _mesh = AssetDatabase.LoadAssetAtPath<Object>(meshPath);
                         _conversionStatus = "Conversion complete.";
-                        _instance = Instantiate(_mesh) as GameObject;
+
+                        var meshRoot = new GameObject(_gaussianSplatRenderer.name);
+                        var gsTransform = _gaussianSplatRenderer.transform;
+                        meshRoot.transform.position = gsTransform.position;
+                        meshRoot.transform.rotation = gsTransform.rotation;
+                        
+                        _instance = Instantiate(_mesh, meshRoot.transform, false) as GameObject;
                         if (_instance != null)
                         {
-                            _instance.name = _instance.name.Replace("(Clone)", "(Mesh)");
-                            
-                            _instance.transform.position = _gaussianSplatRenderer.transform.position;
-                            
-                            _instance.transform.Rotate(new Vector3(90f,0f,0f));
-                            
-                            //todo: destroy instead?
-                            //Destroy(_gaussianSplatRenderer.gameObject);
-                            _gaussianSplatRenderer.gameObject.SetActive(false);    
+                            _instance.name = "Mesh";
+                            _instance.transform.Rotate(new Vector3(-180f,0f,0f));
+                            //parents Gaussian splat and disables it
+                            _gaussianSplatRenderer.transform.SetParent(meshRoot.transform);
+                            _gaussianSplatRenderer.gameObject.SetActive(false);
+                            _gaussianSplatRenderer.name = "Gaussian splat";
                         }
                         _conversionProcessing = false;
                     },

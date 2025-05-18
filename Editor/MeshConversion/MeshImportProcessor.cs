@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace GaussianSplatting.Editor
 {
-    public class MeshTextureExtractor : AssetPostprocessor
+    public class MeshImportProcessor : AssetPostprocessor
     {
         private bool IsImportedMeshModel =>
             assetPath.Equals(GaussianSplattingPackageSettings.Instance.ImportedMeshPath);
@@ -11,13 +11,12 @@ namespace GaussianSplatting.Editor
         {
             if (IsImportedMeshModel)
             {
-                Debug.Log($"Mesh texture extractor preprocessing {assetPath}");
-                
                 ModelImporter modelImporter = assetImporter as ModelImporter;
                 if (modelImporter != null)
                 {
                     modelImporter.materialImportMode = ModelImporterMaterialImportMode.ImportViaMaterialDescription;
                     modelImporter.materialLocation = ModelImporterMaterialLocation.External;
+                    modelImporter.bakeAxisConversion = true;
                 }
             }
         }
@@ -26,8 +25,7 @@ namespace GaussianSplatting.Editor
         {
             if (IsImportedMeshModel)
             {
-                Debug.Log($"Mesh texture extractor postprocessing {assetPath}");
-                model.transform.rotation = Quaternion.Euler(90f, 180, 0f);
+                GaussianSplattingPackageSettings.Instance.ImportedMeshPath = null;
             }
         }
     }

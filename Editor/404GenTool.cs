@@ -359,7 +359,6 @@ namespace GaussianSplatting.Editor
 
         private float m_inputAreaWidth = 480;
         private float m_inputAreaHeight = 60;
-        private int selectedTab = 0;
         private void DrawPromptInput()
         {
             GUILayout.BeginVertical();
@@ -1177,13 +1176,11 @@ namespace GaussianSplatting.Editor
                                         var instance = Instantiate(mesh) as GameObject;
                                         if (instance != null)
                                         {
-                                            instance.name = instance.name.Replace("(Clone)", "(Mesh)");
+                                            instance.name = promptItem.prompt;
+                                            instance.transform.Rotate(new Vector3(-180f,0f,0f));
+                                            promptItem.gameobject = instance;
                                         }
-
                                         promptItem.Log("mesh file saved at: " + meshPath);
-                                        
-                                        promptItem.gameobject = instance;
-
                                         promptItem.isActive = false;
                                         promptItem.promptStatus = PromptStatus.Completed;
                                     }

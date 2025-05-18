@@ -38,6 +38,7 @@ namespace GaussianSplatting.Editor
                             newObject.SetActive(false);
                             newObject.SetActive(true);
                             renderer.m_Asset = asset;
+                            newObject.transform.localScale = new Vector3(1, 1, -1);
                             EditorUtility.SetDirty(asset);
                             Debug.Log("Successfully loaded .ply file: " + path);
                         }
