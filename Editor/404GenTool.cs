@@ -1122,6 +1122,7 @@ namespace GaussianSplatting.Editor
                                 {
                                     promptItem.Log(log);
                                     GameObject newObject = new GameObject(promptItem.prompt);
+                                    newObject.transform.localScale = new Vector3(1, 1, -1);
                                     promptItem.gameobject = newObject;
                         
                                     var renderer = newObject.AddComponent<GaussianSplatRenderer>();
