@@ -167,11 +167,19 @@ public static class MeshConversionUtility
         form.AddBinaryData("file", inputData, fileName, "application/octet-stream");
         
         var settings = GaussianSplattingPackageSettings.Instance;
-        
-        form.AddField("MinDetailsSize", settings.MinDetailSize.ToString(CultureInfo.InvariantCulture));
-        form.AddField("Simplify", settings.Simplify.ToString(CultureInfo.InvariantCulture));
-        form.AddField("AngleLimit", (settings.AngleLimit * Mathf.Deg2Rad).ToString(CultureInfo.InvariantCulture));
-        form.AddField("TextureSize", settings.TextureSize.ToString());
+
+        var minDetail = settings.MinDetailSize.ToString(CultureInfo.InvariantCulture);
+        form.AddField("min_detail", minDetail);
+        var simplify = settings.Simplify.ToString(CultureInfo.InvariantCulture);
+        form.AddField("simplify", simplify);
+        var angleLimit = (settings.AngleLimit * Mathf.Deg2Rad).ToString(CultureInfo.InvariantCulture);
+        form.AddField("angle_limit", angleLimit);
+        var textureSize = ((int)settings.TextureSize).ToString();
+        form.AddField("texture_size", textureSize);
+        if (GaussianSplattingPackageSettings.Instance.LogToConsole)
+        {
+            Debug.Log($"Sending mesh conversion params min_detail:{minDetail}, simplify:{simplify}, angle_limit:{angleLimit}, texture_size:{textureSize}");
+        }
 
         using UnityWebRequest www = UnityWebRequest.Post(settings.ConversionServiceUrl, form);
         yield return www.SendWebRequest();
