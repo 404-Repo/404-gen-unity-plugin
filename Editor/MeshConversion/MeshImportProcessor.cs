@@ -21,6 +21,22 @@ namespace GaussianSplatting.Editor
             }
         }
 
+        private void OnPreprocessTexture()
+        {
+            if (assetPath.Contains("baked_texture"))
+            {
+                if (GaussianSplattingPackageSettings.Instance.LogToConsole)
+                {
+                    Debug.Log($"Preprocessing texture {assetPath}");
+                }
+                var textureImporter = assetImporter as TextureImporter;
+                if (textureImporter != null)
+                {
+                    textureImporter.maxTextureSize = 8192;
+                }
+            }
+        }
+
         void OnPostprocessModel(GameObject model)
         {
             if (IsImportedMeshModel)
