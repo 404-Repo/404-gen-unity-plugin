@@ -182,6 +182,9 @@ namespace GaussianSplatting
                 {
                     _conversionProcessing = true;
                     _conversionStatus = "Started";
+                    _ply = null;
+                    _mesh = null;
+                    _instance = null;
                     EditorCoroutineUtility.StartCoroutineOwnerless(MeshConversionCoroutine());
                 }
                 GUILayout.FlexibleSpace();
