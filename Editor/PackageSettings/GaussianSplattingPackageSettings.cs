@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using static MeshConversionUtility;
 
 namespace GaussianSplatting.Editor
@@ -25,7 +26,7 @@ namespace GaussianSplatting.Editor
         public float Simplify = 0f;
         public int AngleLimit = 60;
         public MeshConversionTextureSize TextureSize;
-        public string ImportedMeshPath;
+        public List<string> ImportedMeshPaths = new List<string>();
         
         //singleton
         public static GaussianSplattingPackageSettings Instance
@@ -51,6 +52,27 @@ namespace GaussianSplatting.Editor
             Simplify = 0f;
             AngleLimit = 60;
             TextureSize = MeshConversionTextureSize.Size2048;
+        }
+
+        public void SetImportedMeshPath(string meshPath)
+        {
+            if (!ImportedMeshPaths.Contains(meshPath))
+            {
+                ImportedMeshPaths.Add(meshPath);
+            }
+        }
+
+        public bool IsImportedMeshPath(string meshPath)
+        {
+            return ImportedMeshPaths.Contains(meshPath);
+        }
+
+        public void ClearImportedMeshPath(string meshPath)
+        {
+            if (ImportedMeshPaths.Contains(meshPath))
+            {
+                ImportedMeshPaths.Remove(meshPath);
+            }
         }
     }
 }

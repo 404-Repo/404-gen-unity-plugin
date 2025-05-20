@@ -1167,7 +1167,7 @@ namespace GaussianSplatting.Editor
                                         var meshPath = Path.Combine(folderPath, $"{modelName}/{meshFileName}")
                                             .Replace("\\", "/");
 
-                                        GaussianSplattingPackageSettings.Instance.ImportedMeshPath = meshPath;
+                                        GaussianSplattingPackageSettings.Instance.SetImportedMeshPath(meshPath);
 
                                         File.WriteAllBytes(meshPath, meshData);
                                         AssetDatabase.ImportAsset(meshPath);

@@ -239,7 +239,7 @@ namespace GaussianSplatting
             var meshPath = Path.Combine(folderPath, $"{modelName}/{meshFileName}")
                 .Replace("\\", "/");
 
-            GaussianSplattingPackageSettings.Instance.ImportedMeshPath = meshPath;
+            GaussianSplattingPackageSettings.Instance.SetImportedMeshPath(meshPath);
             
             MeshConversionUtility.ExportPlyFile(_gaussianSplatRenderer, _exportInWorldSpace, plyPath);
             yield return null;

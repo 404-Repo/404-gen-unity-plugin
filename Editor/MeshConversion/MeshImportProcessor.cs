@@ -6,7 +6,7 @@ namespace GaussianSplatting.Editor
     public class MeshImportProcessor : AssetPostprocessor
     {
         private bool IsImportedMeshModel =>
-            assetPath.Equals(GaussianSplattingPackageSettings.Instance.ImportedMeshPath);
+            (GaussianSplattingPackageSettings.Instance.IsImportedMeshPath(assetPath));
         private void OnPreprocessModel()
         {
             if (IsImportedMeshModel)
@@ -41,7 +41,7 @@ namespace GaussianSplatting.Editor
         {
             if (IsImportedMeshModel)
             {
-                GaussianSplattingPackageSettings.Instance.ImportedMeshPath = null;
+                GaussianSplattingPackageSettings.Instance.ClearImportedMeshPath(assetPath);
             }
         }
     }
