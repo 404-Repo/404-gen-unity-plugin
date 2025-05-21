@@ -25,7 +25,7 @@ namespace GaussianSplatting.Editor
         public float MinDetailSize = 0.01f;
         public float Simplify = 0f;
         public int AngleLimit = 60;
-        public MeshConversionTextureSize TextureSize;
+        public MeshConversionTextureSize TextureSize = MeshConversionTextureSize.Size2048;
         public List<string> ImportedMeshPaths = new List<string>();
         
         //singleton
