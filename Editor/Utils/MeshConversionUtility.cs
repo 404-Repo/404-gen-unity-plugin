@@ -214,4 +214,30 @@ public static class MeshConversionUtility
         GaussianSplat,
         MeshModel
     }
+
+    public static void DrawInsecureHttpOptions()
+    {
+        if (PlayerSettings.insecureHttpOption == InsecureHttpOption.NotAllowed)
+        {
+            GUILayout.Space(20);
+            EditorGUILayout.HelpBox(
+                "Non-secure network connections are required to use mesh conversion service",
+                MessageType.Error);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Allow downloads over http:");
+            EditorGUILayout.Space();
+            if (GUILayout.Button("Development only", GUILayout.Width(120)))
+            {
+                PlayerSettings.insecureHttpOption = InsecureHttpOption.DevelopmentOnly;
+            }
+            EditorGUILayout.Space();
+            if (GUILayout.Button("Always allowed", GUILayout.Width(120)))
+            {
+                PlayerSettings.insecureHttpOption = InsecureHttpOption.AlwaysAllowed;
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.Space(20);
+        } 
+    }
 }

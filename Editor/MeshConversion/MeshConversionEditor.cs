@@ -43,6 +43,8 @@ namespace GaussianSplatting
             EditorGUILayout.BeginVertical(GUILayout.MinHeight(350));
             DrawConversionDescription();
             EditorGUILayout.Space();
+            MeshConversionUtility.DrawInsecureHttpOptions();
+            EditorGUILayout.Space();
 
             DrawInputField();
             EditorGUILayout.Space();
@@ -68,8 +70,6 @@ namespace GaussianSplatting
                 " and retrieve a mesh model",
                 MessageType.Info);
         }
-
-        
 
         private void DrawInputField()
         {
@@ -174,7 +174,10 @@ namespace GaussianSplatting
         private static GameObject _instance;
         private void DrawConversionButton()
         {
-            using (new EditorGUI.DisabledScope(_gaussianSplatRenderer == null || !_folderExists || !_folderWithinAssets || _conversionProcessing))
+            
+            bool conversionButtonEnabled = _gaussianSplatRenderer != null && _folderExists && _folderWithinAssets &&
+                                           !_conversionProcessing && PlayerSettings.insecureHttpOption != InsecureHttpOption.NotAllowed;
+            using (new EditorGUI.DisabledScope(!conversionButtonEnabled))
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();

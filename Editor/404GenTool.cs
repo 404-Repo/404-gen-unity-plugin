@@ -386,24 +386,38 @@ namespace GaussianSplatting.Editor
             GaussianSplattingPackageSettings.Instance.GenerationOption = (MeshConversionUtility.GenerationOption) GUILayout.Toolbar((int)GaussianSplattingPackageSettings.Instance.GenerationOption, new[] { "Gaussian Splat", "Mesh model" }, GUILayout.Width(300));
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
+
+            if (GaussianSplattingPackageSettings.Instance.GenerationOption ==
+                MeshConversionUtility.GenerationOption.MeshModel &&
+                PlayerSettings.insecureHttpOption == InsecureHttpOption.NotAllowed)
+            {
+                MeshConversionUtility.DrawInsecureHttpOptions();
+            }
             
             GUILayout.Space(4);
             
             //Generate button
-            var generateButtonEnabled = IsValidInput(m_inputText); 
+            var generateButtonEnabled = IsValidInput(m_inputText);
+            if (GaussianSplattingPackageSettings.Instance.GenerationOption ==
+                MeshConversionUtility.GenerationOption.MeshModel &&
+                PlayerSettings.insecureHttpOption == InsecureHttpOption.NotAllowed)
+            {
+                generateButtonEnabled = false;
+            }
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            GUI.enabled = generateButtonEnabled;
-            if (GUILayout.Button("Generate", m_generateButtonStyle))
+            using (new EditorGUI.DisabledScope(!generateButtonEnabled))
             {
-                RenderingSetupCheck();
-                windowData.EnqueuePrompt(m_inputText.Trim());
-                m_inputText = "";
-                windowData.promptsScrollPosition = Vector2.zero;
-                Repaint();
+                if (GUILayout.Button("Generate", m_generateButtonStyle))
+                {
+                    RenderingSetupCheck();
+                    windowData.EnqueuePrompt(m_inputText.Trim());
+                    m_inputText = "";
+                    windowData.promptsScrollPosition = Vector2.zero;
+                    Repaint();
+                }
             }
-            
-            GUI.enabled = true;
+
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
 
