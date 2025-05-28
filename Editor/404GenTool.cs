@@ -85,7 +85,11 @@ namespace GaussianSplatting.Editor
             GUILayout.EndHorizontal();
             
             GUILayout.Space(20);
-            DrawRenderingSetup();
+            if (GaussianSplattingPackageSettings.Instance.GenerationOption ==
+                MeshConversionUtility.GenerationOption.GaussianSplat)
+            {
+                DrawRenderingSetup();
+            }
             DrawPromptsTableItems();
         }
 
