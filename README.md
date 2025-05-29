@@ -30,7 +30,9 @@ Unity 2022.3+
 
 #### 2. Add the package
 * [Free Download from Unity Asset Store](https://assetstore.unity.com/packages/slug/311107)
+
 or
+
 * Go to **Window > Package Manager**
 * Click the **+** button in the top-left corner
 * Select **Add package from git URL...**
@@ -55,7 +57,8 @@ or
 ### Generating
 1. Go to **Window > 404-GEN 3D Generator** to open the generation window
 2. Select either Gaussian Splat or Mesh model
-   <img width="480" alt="gen-window" src="https://github.com/user-attachments/assets/ba4473bf-e350-4a82-b922-2b52f6d2809d"/>
+
+<img width="480" alt="gen-window" src="https://github.com/user-attachments/assets/ba4473bf-e350-4a82-b922-2b52f6d2809d"/>
 
   > [!IMPORTANT]
   > When Gaussian Splat is selected in **URP** and **HDRP** projects, a warning message will appear to load then add a custom renderer feature to the scene. This is required to render Gaussian Splatting.
@@ -91,25 +94,30 @@ A prompt is a short text phrase that 404—GEN interprets to create a 3D Gaussia
 In addition to the Position, Rotation, and Scale values in the Inspector, there are two easily adjustable values.
 * Splat Scale: Controls the size of the points, represented by ellipsoids, in the Gaussian Splat
 * Opacity Scale: Points within Gaussian Splats have varying degrees of opacity. This increases or decreases the opacity of all points.
+
 ![gs-scaling](https://github.com/user-attachments/assets/0828e35f-87bb-4438-81b2-af70d4730096)
 
 #### Cutouts
 The cutouts feature can be used to hide a selection of points within the Gaussian Splat, defined by either a box or ellipsoid.
 
 Create a cutout for a selected Gaussian Splat by clicking Add Cutout under the Cutouts heading of the Inspector.
+
 <img width="480" alt="Screenshot 2025-05-29 at 9 01 26 AM" src="https://github.com/user-attachments/assets/25c0a914-4e21-4aa8-b183-5fa236a06258" />
 
 Select a shape and move/scale/rotate as needed.
 
 By default, only the points **inside** the cutout will be rendered. Select **invert** to render the points outside the cutout.
+
 <img width="680" alt="cutout" src="https://github.com/user-attachments/assets/e4ad9979-a5d4-4c6c-a0cc-f6f5d6170483" />
 
 #### Mesh Collider
 The **Add Mesh Collider** button in the Inspector will add a convex hull mesh collider.
+
 ![collider](https://github.com/user-attachments/assets/ec819c97-20f3-41b3-8232-a938da5194db)
 
 #### Shadows
 Like the mesh collider, the **Add Shadow** button in the inspector adds an invisible convex hull mesh to the Gaussian Splat. The shadow it casts lacks any fine details, however the convex hull's low poly count makes it very lightweight.
+
 ![shadow](https://github.com/user-attachments/assets/f2602708-ad43-4752-9aa8-57c03c1ab95f)
 
 #### Convert to Mesh
@@ -127,6 +135,7 @@ The Gaussian Splat can be exported in .ply format using the **Export PLY** butto
 .ply files can be imported by adding them to the project's Assets folder and the scene.
 
 A large collection of Gaussian Splatting .ply files is available in the [404 Dataset](https://dataset.404.xyz).
+
 <img width="800" alt="dataset" src="https://github.com/user-attachments/assets/23d772c1-725c-440f-96c8-3240dd58eae5" />
 
 For questions or help troubleshooting, visit the Help Forum in our [Discord Server](https://discord.gg/404gen)
