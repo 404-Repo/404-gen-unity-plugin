@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using GaussianSplatting.Runtime;
 using UnityEngine;
+using static MeshConversionUtility;
 
 namespace GaussianSplatting.Editor
 {
@@ -36,7 +37,8 @@ namespace GaussianSplatting.Editor
             {
                 prompt = prompt,
                 time = DateTime.Now.ToString(CultureInfo.InvariantCulture),
-                startTime = DateTime.Now
+                startTime = DateTime.Now,
+                GenerationOption = GaussianSplattingPackageSettings.Instance.GenerationOption
             };
             promptItem.Log("Equeued");
             m_promptEditorItems.Add(promptItem);
@@ -64,6 +66,7 @@ namespace GaussianSplatting.Editor
         public List<string> logs = new();
         
         public GameObject gameobject;
+        public GenerationOption GenerationOption;
         public GaussianSplatRenderer renderer;
 
         public DateTime startTime;

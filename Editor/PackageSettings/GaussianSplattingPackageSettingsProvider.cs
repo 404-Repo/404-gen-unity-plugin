@@ -16,16 +16,22 @@ namespace GaussianSplatting.Editor
                 guiHandler = (searchContext) =>
                 {
                     var settings = GaussianSplattingPackageSettings.Instance;
-                
-                    GUILayout.Space(16);
-                    GUILayout.Label("Generated models path", EditorStyles.boldLabel);
+                    EditorGUILayout.Space();
+                    EditorGUI.indentLevel++;
+                    // if (EditorGUILayout.LinkButton("Documentation"))
+                    // {
+                    //     Application.OpenURL("https://atlas-14.gitbook.io/404/x9lT9mUlXacWtIlJhtMr");
+                    // }
+                    EditorGUILayout.Space();
+                    EditorGUILayout.SelectableLabel("Prompt Generation", EditorStyles.boldLabel);
                     
-                    GUILayout.BeginHorizontal();
+                    EditorGUI.indentLevel++;
+                    EditorGUILayout.LabelField("Generated models path", EditorStyles.boldLabel);
+
+                    EditorGUILayout.BeginHorizontal();
                     
-                    GUILayout.Label(settings.GeneratedModelsPath);
-                    GUILayout.FlexibleSpace();
-                    
-                    // Button to open folder browser
+                    EditorGUILayout.TextField(settings.GeneratedModelsPath);
+
                     if (GUILayout.Button("Browse", GUILayout.Width(80)))
                     {
                         // Open folder browser and get selected path
@@ -34,13 +40,19 @@ namespace GaussianSplatting.Editor
                         {
                             if (selectedPath.StartsWith(Application.dataPath))
                             {
-                                if (!Directory.Exists(selectedPath))
+                                var relativePath = FolderUtility.GetAssetsRelativePath(selectedPath);
+                                
+                                if (!FolderUtility.FolderExists(relativePath))
                                 {
-                                    Directory.CreateDirectory(selectedPath);
+                                    FolderUtility.CreateFolderPath(relativePath);
                                 }
-                                settings.GeneratedModelsPath = selectedPath
-                                    .Replace(Application.dataPath, "")
-                                    .Replace("\\", "/");
+
+                                settings.GeneratedModelsPath = relativePath;
+
+                                //todo:remove
+                                // settings.GeneratedModelsPath = selectedPath
+                                //     .Replace(Application.dataPath, "Assets")
+                                //     .Replace("\\", "/");
                             }
                             else
                             {
@@ -48,9 +60,9 @@ namespace GaussianSplatting.Editor
                             }
                         }
                     }
-                    GUILayout.EndHorizontal();
+                    EditorGUILayout.EndHorizontal();
                     
-                    GUILayout.Space(8);
+                    EditorGUILayout.Space(8);
                     //setting for logging to Console
                     settings.LogToConsole = EditorGUILayout.ToggleLeft("Send logs to Console window", settings.LogToConsole);
 
@@ -59,15 +71,29 @@ namespace GaussianSplatting.Editor
                         settings.DeleteAssociatedFilesWithPrompt);
 
                     settings.UsePromptTimeout = EditorGUILayout.BeginToggleGroup("Auto-cancel Prompts that Timeout", settings.UsePromptTimeout);
-                    settings.PromptTimeoutInSeconds = EditorGUILayout.IntSlider("Timeout threshold (sec)", settings.PromptTimeoutInSeconds, 30, 90, GUILayout.MaxWidth(400));
+                    EditorGUILayout.BeginHorizontal();
+                    settings.PromptTimeoutInSeconds = EditorGUILayout.IntSlider("Timeout threshold", settings.PromptTimeoutInSeconds, 30, 120, GUILayout.MaxWidth(600));
+                    EditorGUILayout.LabelField("sec");
+                    EditorGUILayout.EndHorizontal();
                     EditorGUILayout.EndToggleGroup();
+                    EditorGUI.indentLevel--;
+                    EditorGUILayout.Space();
                     
+                    EditorGUILayout.SelectableLabel("Mesh Conversion ", EditorStyles.boldLabel);
+                    
+                    EditorGUI.indentLevel++;
+                    EditorGUILayout.LabelField("Mesh Conversion service URL", EditorStyles.boldLabel);
+                    GaussianSplattingPackageSettings.Instance.ConversionServiceUrl = EditorGUILayout.TextField(GaussianSplattingPackageSettings.Instance.ConversionServiceUrl);
+                    EditorGUILayout.Space();
+                    MeshConversionUtility.DrawMeshConversionOptions();
+                    EditorGUI.indentLevel--;
+                    EditorGUI.indentLevel--;
                     if (GUI.changed)
                     {
                         EditorUtility.SetDirty(settings);
                     }
                 },
-                keywords = new[] { "Generation", "Threshold" }
+                keywords = new[] { "Generation", "Threshold", "Conversion", "Mesh", "Gaussian", "Splats" }
             };
 
             return provider;

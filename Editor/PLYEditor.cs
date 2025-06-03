@@ -17,37 +17,50 @@ namespace GaussianSplatting.Editor
             // Check if the selected file is a .ply file
             if (Path.GetExtension(path).ToLower() == ".ply")
             {
-                EditorGUILayout.HelpBox("This is a .ply file. You can load it using GaussianSplatAssetCreator.",
-                    MessageType.Info);
+                // EditorGUILayout.HelpBox("This is a .ply file. You can load it using GaussianSplatAssetCreator.",
+                //     MessageType.Info);
 
-                if (GUILayout.Button("Import to scene"))
+                EditorGUILayout.Space();
+                GUILayout.BeginHorizontal();
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("Import to scene", GUILayout.Width(200), GUILayout.Height(40)))
                 {
                     try
                     {
                         var assetName = Path.GetFileNameWithoutExtension(path);
-                        var gaussianSplatAssetCreator = new GaussianSplatAssetCreator(false);
+                        var gaussianSplatAssetCreator = new GaussianSplatAssetCreator(true);
                         var asset = gaussianSplatAssetCreator.CreateAsset(path);
-                        GameObject newObject = new GameObject(assetName);
-                        var renderer = newObject.AddComponent<GaussianSplatRenderer>();
+                        if (asset != null)
+                        {
+                            GameObject newObject = new GameObject(assetName);
+                            var renderer = newObject.AddComponent<GaussianSplatRenderer>();
                         
-                        newObject.SetActive(false);
-                        newObject.SetActive(true);
-                
-                        renderer.m_Asset = asset;
-                        EditorUtility.SetDirty(asset);
-
-                        Debug.Log("Successfully loaded .ply file: " + path);
+                            newObject.SetActive(false);
+                            newObject.SetActive(true);
+                            renderer.m_Asset = asset;
+                            newObject.transform.localScale = new Vector3(1, 1, -1);
+                            EditorUtility.SetDirty(asset);
+                            Debug.Log("Successfully loaded .ply file: " + path);
+                        }
+                        else
+                        {
+                            Debug.LogError("Gaussian splat asset is null");
+                        }
                     }
                     catch (System.Exception e)
                     {
                         Debug.LogError("Error loading .ply file: " + e.Message);
                     }
                 }
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
             }
             else
             {
                 base.OnInspectorGUI();
             }
         }
+        
+        
     }
 }
