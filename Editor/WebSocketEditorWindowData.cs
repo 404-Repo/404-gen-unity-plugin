@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using GaussianSplatting.Runtime;
 using UnityEngine;
-using static MeshConversionUtility;
+using static GaussianSplatting.Editor.MeshConversionUtility;
 
 namespace GaussianSplatting.Editor
 {

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using static MeshConversionUtility;
+using static GaussianSplatting.Editor.MeshConversionUtility;
 
 namespace GaussianSplatting.Editor
 {
