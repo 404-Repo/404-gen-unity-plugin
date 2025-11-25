@@ -1,9 +1,24 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using static GaussianSplatting.Editor.MeshConversionUtility;
+using System.ComponentModel;
 
 namespace GaussianSplatting.Editor
 {
+    public enum MeshConversionTextureSize
+    {
+        [Description("0.5K")] Size512 = 512,
+        [Description("1K")] Size1024 = 1024,
+        [Description("2K")] Size2048 = 2048,
+        [Description("4K")] Size4096 = 4096,
+        [Description("8K")] Size8192 = 8192
+    }
+
+    public enum GenerationOption
+    {
+        GaussianSplat,
+        MeshModel
+    }
+
     public class GaussianSplattingPackageSettings : ScriptableObject
     {
         private static GaussianSplattingPackageSettings _instance;
@@ -21,6 +36,8 @@ namespace GaussianSplatting.Editor
         public GenerationOption GenerationOption = GenerationOption.GaussianSplat;
         //todo: set default service url here
         public string ConversionServiceUrl = "http://34.141.10.161/process";
+        public string GatewayApiUrl = "https://gateway-us-west.404.xyz/";
+        public string GatewayApiKey = "bf6714a5-10f4-42a7-9487-9620317e58cb";
         public string ConvertedModelsPath = "Assets/GeneratedModels/Mesh";
         public float MinDetailSize = 0.01f;
         public float Simplify = 0f;

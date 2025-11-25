@@ -418,6 +418,11 @@ namespace GaussianSplatting.Runtime
             m_GpuSortKeys = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count, 4) { name = "GaussianSplatSortIndices" };
 
             // init keys buffer to splat indices
+            Debug.Log((int)KernelIndices.SetIndices);
+            Debug.Log(Props.SplatSortKeys);
+            Debug.Log(m_GpuSortKeys);
+
+
             m_CSSplatUtilities.SetBuffer((int)KernelIndices.SetIndices, Props.SplatSortKeys, m_GpuSortKeys);
             m_CSSplatUtilities.SetInt(Props.SplatCount, m_GpuSortDistances.count);
             m_CSSplatUtilities.GetKernelThreadGroupSizes((int)KernelIndices.SetIndices, out uint gsX, out _, out _);
@@ -448,6 +453,22 @@ namespace GaussianSplatting.Runtime
 
             CreateResourcesForAsset();
         }
+
+#if UNITY_EDITOR
+        void Reset()
+        {
+            m_ShaderSplats = Shader.Find("Gaussian Splatting/Render Splats");
+            m_ShaderComposite = Shader.Find("Hidden/Gaussian Splatting/Composite");
+            m_ShaderDebugPoints = Shader.Find("Gaussian Splatting/Debug/Render Points");
+            m_ShaderDebugBoxes = Shader.Find("Gaussian Splatting/Debug/Render Boxes");
+
+            var guids = UnityEditor.AssetDatabase.FindAssets("SplatUtilities t:ComputeShader");
+            if (guids.Length > 0)
+            {
+                m_CSSplatUtilities = UnityEditor.AssetDatabase.LoadAssetAtPath<ComputeShader>(UnityEditor.AssetDatabase.GUIDToAssetPath(guids[0]));
+            }
+        }
+#endif
 
         void SetAssetDataOnCS(CommandBuffer cmb, KernelIndices kernel)
         {

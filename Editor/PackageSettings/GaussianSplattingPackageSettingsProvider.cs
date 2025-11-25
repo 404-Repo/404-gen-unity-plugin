@@ -79,13 +79,25 @@ namespace GaussianSplatting.Editor
                     EditorGUI.indentLevel--;
                     EditorGUILayout.Space();
                     
+                    EditorGUILayout.SelectableLabel("Gateway Settings", EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    
+                    EditorGUILayout.LabelField("Gateway URL", EditorStyles.boldLabel);
+                    settings.GatewayApiUrl = EditorGUILayout.TextField(settings.GatewayApiUrl);
+                    
+                    EditorGUILayout.LabelField("Gateway API Key", EditorStyles.boldLabel);
+                    settings.GatewayApiKey = EditorGUILayout.TextField(settings.GatewayApiKey);
+                    
+                    EditorGUI.indentLevel--;
+                    EditorGUILayout.Space();
+
                     EditorGUILayout.SelectableLabel("Mesh Conversion ", EditorStyles.boldLabel);
                     
                     EditorGUI.indentLevel++;
                     EditorGUILayout.LabelField("Mesh Conversion service URL", EditorStyles.boldLabel);
                     GaussianSplattingPackageSettings.Instance.ConversionServiceUrl = EditorGUILayout.TextField(GaussianSplattingPackageSettings.Instance.ConversionServiceUrl);
                     EditorGUILayout.Space();
-                    MeshConversionUtility.DrawMeshConversionOptions();
+                    // MeshConversionUtility.DrawMeshConversionOptions(); // Removed because MeshConversionUtility is being removed
                     EditorGUI.indentLevel--;
                     EditorGUI.indentLevel--;
                     if (GUI.changed)
