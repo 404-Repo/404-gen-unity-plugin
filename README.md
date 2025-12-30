@@ -43,6 +43,12 @@ When the import Window Appears, keep all files selected and click **Import**.
 ### 4. Restart Unity.
 - **Please restart Unity before using the Plugin.**
 
+Make sure the rendering backend is now set to 
+- Directx 12 on Windows.
+- Metal on Mac OS.
+- Vulkan on Linux.
+
+
 ## Usage
 ### Generating
 1. Go to **Window > 404-GEN 3D Generator** to open the generation window.
