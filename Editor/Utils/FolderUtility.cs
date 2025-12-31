@@ -6,10 +6,6 @@ namespace GaussianSplatting
 {
     public static class FolderUtility
     {
-        /// <summary>
-        /// Ensures that a folder path relative to the Assets folder exists. Creates missing folders.
-        /// </summary>
-        /// <param name="folderRelativePath">Path relative to the Assets folder (e.g., "Assets/GeneratedModels/Export")</param>
         public static void CreateFolderPath(string folderRelativePath)
         {
             if (!folderRelativePath.StartsWith("Assets"))
@@ -34,19 +30,12 @@ namespace GaussianSplatting
                 currentPath = combinedPath.Replace("\\", "/");
             }
         }
-        /// <summary>
-        /// Validates if a folder path relative to the Assets folder exists.
-        /// </summary>
-        /// <param name="folderRelativePath">Path relative to the Assets folder (e.g., "Assets/GeneratedModels/Export")</param>
+
         public static bool FolderExists(string folderRelativePath)
         {
             return AssetDatabase.IsValidFolder(folderRelativePath);
         }
 
-        /// <summary>
-        /// Converts an absolute folder path to one relative to Assets folder (e.g., "Assets/GeneratedModels")
-        /// </summary>
-        /// <param name="path">Absolute path to the Assets folder (e.g., "Assets/GeneratedModels/Export")</param>
         public static string GetAssetsRelativePath(string path)
         {
             var relativePath = path.Replace(Application.dataPath, "Assets").Replace("\\", "/");

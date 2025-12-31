@@ -10,7 +10,7 @@ using Unity.Mathematics;
 using Unity.Profiling;
 using Unity.Profiling.LowLevel;
 
-namespace GaussianSplatting.Editor.Utils
+namespace GaussianSplatting.Editor
 {
     // Implementation of "Mini Batch" k-means clustering ("Web-Scale K-Means Clustering", Sculley 2010)
     // using k-means++ for cluster initialization.

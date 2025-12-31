@@ -18,7 +18,7 @@ namespace GaussianSplatting.Runtime
     //
     // ReSharper disable once InconsistentNaming
     #if UNITY_6000_0_OR_NEWER
-    class GaussianSplatURPFeature : ScriptableRendererFeature
+    public class GaussianSplatURPFeature : ScriptableRendererFeature
     {
         public class GSRenderPass : ScriptableRenderPass
         {
