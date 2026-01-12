@@ -1,22 +1,23 @@
-# Unity package for 404—GEN 3D Generator
+# Unity Package for 404—GEN 3D Generator
 [![Discord](https://img.shields.io/discord/1065924238550237194?logo=discord&logoColor=%23FFFFFF&logoSize=auto&label=Discord&labelColor=%235865F2)](https://discord.gg/404gen)
 
 *404—GEN leverages decentralized AI to transform your words into detailed 3D models, bringing your ideas to life in just a few seconds*  
 [Project Repo](https://github.com/404-Repo/three-gen-subnet) | [Website](https://404.xyz/) | [X](https://x.com/404gen_)
 
 ## About
-#### 3D Gaussian Splatting
+### 3D Gaussian Splatting
 
 3D Gaussian Splatting is a technique used for efficient representation and rendering of three-dimensional objects by leveraging Gaussian distributions.
 This technique renders high fidelity objects using lots of tiny translucent ellipsoids or "splats." Each splat carries information about its color, size, position, and opacity.
 
-#### Unity package
+### Unity Package
   
 - With this package, users can:
-  - Enter text prompts to generate **3D Gaussian Splats** and **Mesh** FBX models
-  - Display **3D Gaussian Splat** assets inside Unity
-  - Perform basic transformations on **3D Gaussian Splats**
-  - Convert **3DGS to mesh**
+  - Enter Text or Image Prompts to generate **3D Gaussian Splats (3DGS)** and **Mesh FBX Models**.
+  - Display **3D Gaussian Splat** assets inside Unity.
+  - Apply **cutouts**, **colliders** and **shadows** to **3D Gaussian Splats**.
+  - Import and Export **.ply** files.
+  - Convert **3DGS** to **Mesh**.
 
 ## Installation
 
@@ -24,51 +25,39 @@ This technique renders high fidelity objects using lots of tiny translucent elli
 Unity 2022.3+
 
 ### Instructions
+*Previous Release must be Removed before Installing Latest Release.*
 
-#### 1. Open Unity
-- From Unity Hub, create a new 3D project (any pipeline)
+### 1. Unity Asset Store
+- From the [Unity Asset Store](https://assetstore.unity.com/packages/tools/generative-ai/404-gen-3d-generator-311107), click "Add to My Assets".
 
-#### 2. Add the package
-* [Free Download from Unity Asset Store](https://assetstore.unity.com/packages/slug/311107)
+### 2. Download the Package.
+- In Unity, create a new 3D Project or open and existing one.
+- Go to **My Assets**.
+- Select 404—GEN from the list.
+- Click **Download**.
 
-or
+### 3. Install The Package.
+- After the package has been downloaded click **Import**.
+When the import Window Appears, keep all files selected and click **Import**.
 
-* Go to **Window > Package Manager**
-* Click the **+** button in the top-left corner
-* Select **Add package from git URL...**
-* Enter this GitHub repository's URL: `https://github.com/404-Repo/404-gen-unity-plugin.git`
-  
-  <img alt="Add package from Git" src="./Documentation~/Images/PackageManager.png">
+### 4. Restart Unity.
+- **Please restart Unity before using the Plugin.**
 
-#### 3. Edit Project Settings
-* Go to **Edit > Project Settings...** and go to the **Player** section
-* Make sure that the correct rendering backend is selected
-    - **D3D12** on Windows
-    - **Metal** on Mac
-    - **Vulkan** on Linux
-  
-  <img alt="Set rendering backend" src="./Documentation~/Images/ProjectSettingsGraphicsAPI.gif">
+Make sure the rendering backend is now set to 
+- Directx 12 on Windows.
+- Metal on Mac OS.
+- Vulkan on Linux.
 
-* Check the **Allow 'unsafe' Code** box
-  
-  <img alt="Enable unsafe code" src="./Documentation~/Images/EnableUnsafeCode.gif">
 
 ## Usage
 ### Generating
-1. Go to **Window > 404-GEN 3D Generator** to open the generation window
-2. Select either Gaussian Splat or Mesh model
-
-<img width="480" alt="gen-window" src="https://github.com/user-attachments/assets/ba4473bf-e350-4a82-b922-2b52f6d2809d"/>
-
-  > [!IMPORTANT]
-  > When Gaussian Splat is selected in **URP** and **HDRP** projects, a warning message will appear to load then add a custom renderer feature to the scene. This is required to render Gaussian Splatting.
-3. Type your prompt and click Generate. Each generation should take **1 to 2 minutes**
+1. Go to **Window > 404-GEN 3D Generator** to open the generation window.
+2. Type your **Text Prompt** or Import your **3D Image Prompt** and click **Generate**. Each generation should take **1 to 2 minutes**.
 
 <img alt="Enable unsafe code" src="./Documentation~/Images/Prompts.png">
 
 The 404-GEN 3D Generator window tracks the progress of generating the models for prompts.
 Once the prompt has been enqueued, it waits on the backend to complete the generation.
-Mesh generation can take slightly longer, as the Gaussian Splat is first generated then converted to mesh.
 
 Generation process changes states from <img alt="Started" src="./Editor/Images/pending.png" height="20"> Started to <img alt="Completed" src="./Editor/Images/complete.png" height="20"> Completed or 
 <img alt="Failed" src="./Editor/Images/failed.png" height="20">  Failed.
@@ -83,11 +72,11 @@ Use available action icons to:
   * <img alt="Delete" src="./Editor/Images/delete.png" height="20"> delete prompt entry
   * <img alt="Settings" src="./Editor/Images/settings.png" height="20"> open Project settings for this package
 
+    
 ### Prompts
-A prompt is a short text phrase that 404—GEN interprets to create a 3D Gaussian Splat. In this section, we’ll explore how to craft clear and effective prompts, along with tips to refine your input for the best results.
-* Describe a single element or object, rather than an entire scene. A good rule of thumb is something you can look in toward, rather than out toward, regardless of size. "Sky" wouldn't work, but "planet" would.
-* Try to be specific about colors, styles, and elements
-* Be open-minded and flexible: you may need to re-phrase or add/remove parts of the prompt. Like any skill, prompting can take time to perfect
+For help with prompts please refer to our [Prompt Guide](https://guide.404.xyz/user-guide/prompts)
+
+For questions or help troubleshooting, visit the Help Forum in our [Discord Server](https://discord.gg/404gen)
 
 ### Gaussian Splatting Tools
 #### Transformations
