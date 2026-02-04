@@ -59,18 +59,6 @@ Make sure the rendering backend is now set to
 The 404-GEN 3D Generator window tracks the progress of generating the models for prompts.
 Once the prompt has been enqueued, it waits on the backend to complete the generation.
 
-Generation process changes states from <img alt="Started" src="./Editor/Images/pending.png" height="20"> Started to <img alt="Completed" src="./Editor/Images/complete.png" height="20"> Completed or 
-<img alt="Failed" src="./Editor/Images/failed.png" height="20">  Failed.
-
-Use available action icons to:
-
-  * <img alt="Target" src="./Editor/Images/close.png" height="20">  cancel active prompt entry
-  * <img alt="Target" src="./Editor/Images/hidden.png" height="20"> or <img alt="Target" src="./Editor/Images/visible.png" height="20"> show or hide created Gaussian splat model
-  * <img alt="Target" src="./Editor/Images/target.png" height="20"> select generated model in Scene view and Inspector window
-  * <img alt="Resend" src="./Editor/Images/retry.png" height="20"> resend failed or canceled prompt
-  * <img alt="Log" src="./Editor/Images/logs.png" height="20">**LOGS** show log messages in a tooltip
-  * <img alt="Delete" src="./Editor/Images/delete.png" height="20"> delete prompt entry
-  * <img alt="Settings" src="./Editor/Images/settings.png" height="20"> open Project settings for this package
 
     
 ### Prompts
@@ -84,35 +72,35 @@ In addition to the Position, Rotation, and Scale values in the Inspector, there 
 * Splat Scale: Controls the size of the points, represented by ellipsoids, in the Gaussian Splat
 * Opacity Scale: Points within Gaussian Splats have varying degrees of opacity. This increases or decreases the opacity of all points.
 
-![gs-scaling](https://github.com/user-attachments/assets/0828e35f-87bb-4438-81b2-af70d4730096)
+![gs-scaling](./Documentation~/Images/scaling.gif)
 
 #### Cutouts
 The cutouts feature can be used to hide a selection of points within the Gaussian Splat, defined by either a box or ellipsoid.
 
 Create a cutout for a selected Gaussian Splat by clicking Add Cutout under the Cutouts heading of the Inspector.
 
-<img width="480" alt="Screenshot 2025-05-29 at 9 01 26 AM" src="https://github.com/user-attachments/assets/25c0a914-4e21-4aa8-b183-5fa236a06258" />
+<img width="480" alt="Screenshot 2025-05-29 at 9 01 26 AM" src="./Documentation~/Images/edit-resources.png" />
 
 Select a shape and move/scale/rotate as needed.
 
 By default, only the points **inside** the cutout will be rendered. Select **invert** to render the points outside the cutout.
 
-<img width="680" alt="cutout" src="https://github.com/user-attachments/assets/e4ad9979-a5d4-4c6c-a0cc-f6f5d6170483" />
+<img width="680" alt="cutout" src="./Documentation~/Images/cutout.png" />
 
 #### Mesh Collider
 The **Add Mesh Collider** button in the Inspector will add a convex hull mesh collider.
 
-![collider](https://github.com/user-attachments/assets/ec819c97-20f3-41b3-8232-a938da5194db)
+![collider](./Documentation~/Images/collider.png)
 
 #### Shadows
 Like the mesh collider, the **Add Shadow** button in the inspector adds an invisible convex hull mesh to the Gaussian Splat. The shadow it casts lacks any fine details, however the convex hull's low poly count makes it very lightweight.
 
-![shadow](https://github.com/user-attachments/assets/f2602708-ad43-4752-9aa8-57c03c1ab95f)
+![shadow](./Documentation~/Images/shadow.png)
 
 #### Convert to Mesh
 The **Convert to Mesh** button will open a Mesh Conversion window with input field (for Gaussian Splat component), file output folder location, conversion settings, reference fields for files that are created in the process (.ply and .mesh files), as well as the reference field for the game object that will be created and placed in current scene (Instance).
 
-<img width="500" alt="mesh-conversion" src="https://github.com/user-attachments/assets/7779fc58-038b-45e1-aa81-892c97209799" />
+<img width="500" alt="mesh-conversion" src="./Documentation~/Images/mesh-conversion.png" />
 
 The sliders adjust the level of detail on the mesh output.
 
@@ -125,6 +113,6 @@ The Gaussian Splat can be exported in .ply format using the **Export PLY** butto
 
 A large collection of Gaussian Splatting .ply files is available in the [404 Dataset](https://dataset.404.xyz).
 
-<img width="800" alt="dataset" src="https://github.com/user-attachments/assets/23d772c1-725c-440f-96c8-3240dd58eae5" />
+<img width="800" alt="dataset" src="./Documentation~/Images/dataset.png" />
 
 For questions or help troubleshooting, visit the Help Forum in our [Discord Server](https://discord.gg/404gen)
