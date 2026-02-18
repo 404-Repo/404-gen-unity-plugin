@@ -35,14 +35,9 @@ namespace GaussianSplatting.Editor
 
         public GenerationOption GenerationOption = GenerationOption.GaussianSplat;
         //todo: set default service url here
-        public string ConversionServiceUrl = "http://34.141.10.161/process";
         public string GatewayApiUrl = "https://gateway-us-west.404.xyz/";
-        public string GatewayApiKey = "bf6714a5-10f4-42a7-9487-9620317e58cb";
-        public string ConvertedModelsPath = "Assets/GeneratedModels/Mesh";
-        public float MinDetailSize = 0.01f;
-        public float Simplify = 0f;
-        public int AngleLimit = 60;
-        public MeshConversionTextureSize TextureSize = MeshConversionTextureSize.Size2048;
+        public string GatewayApiKey = "6eca4068-3be6-4d30-b828-f63cda3bc35b";
+
         public List<string> ImportedMeshPaths = new List<string>();
         
         //singleton
@@ -63,13 +58,7 @@ namespace GaussianSplatting.Editor
             }
         }
 
-        public void SetDefaultConversionParameters()
-        {
-            MinDetailSize = 0.01f;
-            Simplify = 0f;
-            AngleLimit = 60;
-            TextureSize = MeshConversionTextureSize.Size2048;
-        }
+
 
         public void SetImportedMeshPath(string meshPath)
         {

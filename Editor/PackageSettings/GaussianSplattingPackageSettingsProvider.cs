@@ -18,10 +18,6 @@ namespace GaussianSplatting.Editor
                     var settings = GaussianSplattingPackageSettings.Instance;
                     EditorGUILayout.Space();
                     EditorGUI.indentLevel++;
-                    // if (EditorGUILayout.LinkButton("Documentation"))
-                    // {
-                    //     Application.OpenURL("https://atlas-14.gitbook.io/404/x9lT9mUlXacWtIlJhtMr");
-                    // }
                     EditorGUILayout.Space();
                     EditorGUILayout.SelectableLabel("Prompt Generation", EditorStyles.boldLabel);
                     
@@ -49,10 +45,7 @@ namespace GaussianSplatting.Editor
 
                                 settings.GeneratedModelsPath = relativePath;
 
-                                //todo:remove
-                                // settings.GeneratedModelsPath = selectedPath
-                                //     .Replace(Application.dataPath, "Assets")
-                                //     .Replace("\\", "/");
+
                             }
                             else
                             {
@@ -91,13 +84,8 @@ namespace GaussianSplatting.Editor
                     EditorGUI.indentLevel--;
                     EditorGUILayout.Space();
 
-                    EditorGUILayout.SelectableLabel("Mesh Conversion ", EditorStyles.boldLabel);
                     
-                    EditorGUI.indentLevel++;
-                    EditorGUILayout.LabelField("Mesh Conversion service URL", EditorStyles.boldLabel);
-                    GaussianSplattingPackageSettings.Instance.ConversionServiceUrl = EditorGUILayout.TextField(GaussianSplattingPackageSettings.Instance.ConversionServiceUrl);
-                    EditorGUILayout.Space();
-                    // MeshConversionUtility.DrawMeshConversionOptions(); // Removed because MeshConversionUtility is being removed
+
                     EditorGUI.indentLevel--;
                     EditorGUI.indentLevel--;
                     if (GUI.changed)

@@ -69,7 +69,7 @@ public class GatewayTask
             _client.DefaultRequestHeaders.Add("x-client-origin", "unity");
         }
 
-        public async Task<GatewayTask> AddTaskAsync(string textPrompt)
+        public async Task<GatewayTask> AddTaskAsync(string textPrompt, GenerationMode mode, int seed)
         {
             try
             {
@@ -89,13 +89,14 @@ public class GatewayTask
             }
         }
 
-        public async Task<GatewayTask> AddTaskAsync(Texture2D imagePrompt)
+        public async Task<GatewayTask> AddTaskAsync(Texture2D imagePrompt, GenerationMode mode, int seed)
         {
             try
             {
                 string url = ConstructUrl(_gatewayUrl, GatewayRoutes.AddTask);
                 var boundary = "----WebKitFormBoundary" + System.Guid.NewGuid().ToString("N");
                 using var form = new MultipartFormDataContent(boundary);
+                string modeString = mode == GenerationMode._3DGS ? "404-3dgs" : "404-mesh";
                 
                 form.Headers.ContentType.Parameters.Clear();
                 form.Headers.ContentType.Parameters.Add(new NameValueHeaderValue("boundary", boundary));
@@ -123,9 +124,8 @@ public class GatewayTask
                     Name = "\"image\"",
                     FileName = "\"" + "image.png"+ "\""
                 };
-
-
                 form.Add(imageContent, "image", "image.png");
+                form.Add(new StringContent(modeString), "model");
 
                 HttpResponseMessage response = await _client.PostAsync(url, form);
                 response.EnsureSuccessStatusCode();

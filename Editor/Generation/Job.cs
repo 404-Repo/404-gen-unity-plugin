@@ -37,7 +37,7 @@ namespace GaussianSplatting.Editor
         public string Id { get; private set; } = "";
 
         public string Name { get; set; } = "";
-
+        public int Seed { get; set; } = 0;
         public string TextPrompt { get; set; } = "";
         public Texture2D ImagePrompt { get; set; }
         public GenerationMode GenMode { get; set; }

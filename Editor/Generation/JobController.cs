@@ -32,7 +32,7 @@ namespace GaussianSplatting.Editor
 
         public event Action OnJobsChanged;
 
-        public void CreateJob(string textPrompt, Texture2D imagePrompt, string imagePath, GenerationMode genMode)
+        public void CreateJob(string textPrompt, Texture2D imagePrompt, string imagePath, GenerationMode genMode, int seed)
         {
             string name;
             if (imagePrompt != null)
@@ -47,7 +47,8 @@ namespace GaussianSplatting.Editor
                 Name = name,
                 TextPrompt = textPrompt,
                 ImagePrompt = imagePrompt,
-                GenMode = genMode
+                GenMode = genMode,
+                Seed = seed
             };
 
             _jobs.Add(job);
@@ -90,9 +91,9 @@ namespace GaussianSplatting.Editor
                 
                 GatewayTask task;
                 if (job.ImagePrompt)                
-                    task = await _gateway.AddTaskAsync(job.ImagePrompt);
+                    task = await _gateway.AddTaskAsync(job.ImagePrompt, job.GenMode, job.Seed);
                 else
-                    task = await _gateway.AddTaskAsync(job.TextPrompt);
+                    task = await _gateway.AddTaskAsync(job.TextPrompt, job.GenMode, job.Seed);
 
                 job.Status = JobStatus.Running;
                 OnJobsChanged?.Invoke();
@@ -107,31 +108,17 @@ namespace GaussianSplatting.Editor
                         OnJobsChanged?.Invoke();
 
                         var result = await _gateway.GetResultAsync(task);
-                        var plydata = SpzLoader.Instance.Decompress(result);
+
                         string modelsFolder = GaussianSplattingPackageSettings.Instance.GeneratedModelsPath;
-                        
                         if (!Directory.Exists(modelsFolder))
-                            Directory.CreateDirectory(modelsFolder);
+                                Directory.CreateDirectory(modelsFolder);
 
-                        string modelPath = Path.Combine(modelsFolder, $"{task.id}.ply");
-                        File.WriteAllBytes(modelPath, plydata);
-                        
-                        if (job.GenMode == GenerationMode.Mesh)
+                        if (job.GenMode == GenerationMode._3DGS)
                         {
-                            string meshPath = await MeshConversionService.ConvertPlyToMeshAsync(plydata, task.id);
-                            job.ResultPath = meshPath;
+                            var plydata = SpzLoader.Instance.Decompress(result);
+                            string modelPath = Path.Combine(modelsFolder, $"{task.id}.ply");
+                            File.WriteAllBytes(modelPath, plydata);
 
-                            var meshPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(meshPath);
-                            if (meshPrefab != null)
-                            {
-                                var instance = (GameObject)PrefabUtility.InstantiatePrefab(meshPrefab);
-                                instance.name = job.Name;
-                                instance.transform.Rotate(new Vector3(-180f, 0f, 0f));
-                                Selection.activeObject = instance;
-                            }
-                        }
-                        else
-                        {
                             job.ResultPath = modelPath;
                             AssetDatabase.Refresh();
 
@@ -144,7 +131,38 @@ namespace GaussianSplatting.Editor
                             var asset = _gsAssetCreator.CreateAsset(modelPath);
                             renderer.m_Asset = asset;
                             EditorUtility.SetDirty(asset);
+                            
+                        }                
+                        else if (job.GenMode == GenerationMode.Mesh)
+                        {                   
+                            string modelPath = Path.Combine(modelsFolder, $"{task.id}.glb");
+                            File.WriteAllBytes(modelPath, result);                
+                            AssetDatabase.ImportAsset(modelPath);
+                            job.ResultPath = modelPath;
+
+                            var meshPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
+                            if (meshPrefab != null)
+                            {
+                                var instance = (GameObject)PrefabUtility.InstantiatePrefab(meshPrefab);
+                                instance.name = job.Name;
+                                Selection.activeObject = instance;
+                            }
                         }
+                        // else
+                        // {
+                        //     job.ResultPath = modelPath;
+                        //     AssetDatabase.Refresh();
+
+                        //     GameObject newObject = new GameObject(job.Name);
+                        //     newObject.transform.localScale = new Vector3(1, 1, -1);       
+                        //     var renderer = newObject.AddComponent<GaussianSplatRenderer>();
+
+                        //     newObject.SetActive(false);
+                        //     newObject.SetActive(true);
+                        //     var asset = _gsAssetCreator.CreateAsset(modelPath);
+                        //     renderer.m_Asset = asset;
+                        //     EditorUtility.SetDirty(asset);
+                        // }
                  
                         OnJobsChanged?.Invoke();
                         break;

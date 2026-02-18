@@ -10,45 +10,23 @@ namespace GaussianSplatting.Editor
         private Action<Texture2D, string> onImageSelected;
         private Action onSubmit;
         private Action<GenerationMode> onModeChanged;
+        private Action<int> onSeedChanged;
+        private Action<bool> onRandomizeSeedChanged;
 
         private bool isExpanded = true;
 
-        private const float DefaultMinDetailSize = 0.1f;
-        private const float DefaultSimplify = 0.0f;
-        private const float DefaultAngleLimit = 60f;
-        private const int DefaultTextureSizeIndex = 2; // 2048
-
-        // User values
-        private float minDetailSize = DefaultMinDetailSize;
-        private float simplify = DefaultSimplify;
-        private float angleLimit = DefaultAngleLimit;
-        private int textureSizeIndex = DefaultTextureSizeIndex;
-
-        // Dropdown options
-        private readonly int[] textureSizes = { 512, 1024, 2048, 4096, 8192 };
-
-        public PromptInputPanel(Action<string> onTextChanged, Action<Texture2D, string> onImageSelected, Action onSubmit, Action<GenerationMode> onModeChanged)
+        public PromptInputPanel(Action<string> onTextChanged, Action<Texture2D, string> onImageSelected, Action onSubmit, Action<GenerationMode> onModeChanged, Action<int> onSeedChanged, Action<bool> onRandomizeSeedChanged)
         {
             this.onTextChanged = onTextChanged;
             this.onImageSelected = onImageSelected;
             this.onSubmit = onSubmit;
             this.onModeChanged = onModeChanged;
+            this.onSeedChanged = onSeedChanged;
+            this.onRandomizeSeedChanged = onRandomizeSeedChanged;
         }
 
-            public void ApplyMeshSettingsToSettings()
-            {
-                var settings = GaussianSplattingPackageSettings.Instance;
-                settings.MinDetailSize = minDetailSize;
-                settings.Simplify = simplify;
-                settings.AngleLimit = Mathf.RoundToInt(angleLimit);
-                int tex = textureSizes[Mathf.Clamp(textureSizeIndex, 0, textureSizes.Length - 1)];
-                // Map int value to enum by underlying value
-                if (System.Enum.IsDefined(typeof(MeshConversionTextureSize), tex))
-                {
-                    settings.TextureSize = (MeshConversionTextureSize)tex;
-                }
-            }
-        public void Draw(string textPrompt, Texture2D selectedImage, GenerationMode currentMode)
+
+        public void Draw(string textPrompt, Texture2D selectedImage, GenerationMode currentMode, int seed, bool randomizeSeed)
         {
             EditorGUI.indentLevel = 0;
             isExpanded = EditorGUILayout.Foldout(isExpanded, "Prompt", true);
@@ -110,27 +88,18 @@ namespace GaussianSplatting.Editor
             if (newMode != currentMode)
                 onModeChanged?.Invoke(newMode);
 
-            if (newMode == GenerationMode.Mesh)
-            {
-                EditorGUI.indentLevel++;
-                minDetailSize = EditorGUILayout.Slider("Min Detail Size", minDetailSize, 0f, 1f);
-                simplify = EditorGUILayout.Slider("Simplify", simplify, 0f, 1f);
-                angleLimit = EditorGUILayout.Slider("Angle Limit", angleLimit, 0f, 360f);
-                textureSizeIndex = EditorGUILayout.Popup(
-                    "Texture Size",
-                    textureSizeIndex,
-                    Array.ConvertAll(textureSizes, s => s + "px")
-                );
-                GUILayout.Space(4);
-                if (GUILayout.Button("Reset to Defaults"))
-                {
-                    minDetailSize = DefaultMinDetailSize;
-                    simplify = DefaultSimplify;
-                    angleLimit = DefaultAngleLimit;
-                    textureSizeIndex = DefaultTextureSizeIndex;
-                }
-                EditorGUI.indentLevel--;
-            }
+            // --- Seed Input Row ---
+            // GUILayout.Space(4);
+            // GUI.enabled = !randomizeSeed;
+            // int newSeed = EditorGUILayout.IntField("Seed", seed);
+            // if (newSeed != seed)
+            //     onSeedChanged?.Invoke(newSeed);
+            // GUI.enabled = true;
+
+            // bool newRandomizeSeed = EditorGUILayout.Toggle("Randomize Seed", randomizeSeed);
+            // if (newRandomizeSeed != randomizeSeed)
+            //     onRandomizeSeedChanged?.Invoke(newRandomizeSeed);
+
 
             // Generate Button
             GUILayout.Space(8);

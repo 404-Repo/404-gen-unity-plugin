@@ -15,13 +15,15 @@ namespace GaussianSplatting.Editor
         private string _textPrompt = "";
         private Texture2D _selectedImage = null;
         private string _selectedImagePath = null;
-        private GenerationMode _genMode = GenerationMode._3DGS;
+        private GenerationMode _genMode = GenerationMode.Mesh;
 
         private PromptInputPanel _promptPanel;
         private JobPanel _jobPanel;
         private SetupPanel _setupPanel;
 
         private bool _isRenderingSetupCorrect = true;
+        private int _seed = 0;
+        private bool _randomizeSeed = false;
 
         [MenuItem("Window/404-GEN 3D Generator")]
         public static void ShowWindow()
@@ -42,13 +44,12 @@ namespace GaussianSplatting.Editor
                     _selectedImagePath = path;
                 },
                 onSubmit: () => {
-                    if (_genMode == GenerationMode.Mesh)
-                    {
-                        _promptPanel.ApplyMeshSettingsToSettings();
-                    }
-                    JobController.Instance.CreateJob(_textPrompt, _selectedImage, _selectedImagePath, _genMode);
+                    int seed = _randomizeSeed ? -1 : _seed;
+                    JobController.Instance.CreateJob(_textPrompt, _selectedImage, _selectedImagePath, _genMode, seed);
                 },
-                onModeChanged: m => _genMode = m
+                onModeChanged: m => _genMode = m,
+                onSeedChanged: s => _seed = s,
+                onRandomizeSeedChanged: r => _randomizeSeed = r
             );
 
             _jobPanel = new JobPanel(
@@ -79,7 +80,7 @@ namespace GaussianSplatting.Editor
             }
             else
             {
-                _promptPanel.Draw(_textPrompt, _selectedImage, _genMode);
+                _promptPanel.Draw(_textPrompt, _selectedImage, _genMode, _seed, _randomizeSeed);
                 _jobPanel.Draw(JobController.Instance.Jobs);
             }
         }

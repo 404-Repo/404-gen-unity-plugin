@@ -67,13 +67,8 @@ namespace GaussianSplatting.Editor
         {
             m_ExportBakeTransform = EditorPrefs.GetBool(kPrefExportBake, false);
 
-            // Initialize mesh conversion UI from settings
             var s = GaussianSplattingPackageSettings.Instance;
-            m_convMinDetail = s.MinDetailSize;
-            m_convSimplify = s.Simplify;
-            m_convAngleLimit = s.AngleLimit;
-            m_convTextureSizeIdx = System.Array.IndexOf(m_convTextureSizes, (int)s.TextureSize);
-            if (m_convTextureSizeIdx < 0) m_convTextureSizeIdx = 2; // default 2048
+
 
             m_PropAsset = serializedObject.FindProperty("m_Asset");
             m_PropSplatScale = serializedObject.FindProperty("m_SplatScale");
@@ -476,42 +471,42 @@ namespace GaussianSplatting.Editor
                     "Export Gaussian Splat PLY file", "", $"{gs.asset.name}-edit.ply", "ply");
                 if (string.IsNullOrWhiteSpace(path))
                     return;
-                MeshConversionService.ExportPlyFile(gs, m_ExportBakeTransform, path);
+                // MeshConversionService.ExportPlyFile(gs, m_ExportBakeTransform, path);
             }
             
             EditorGUILayout.Space();
             
             // Show mesh conversion status (if any)
-            var status = MeshConversionService.GetConversionStatus(gs);
-            if (!string.IsNullOrEmpty(status))
-            {
-                EditorGUILayout.HelpBox($"Mesh Conversion: {status}", status.StartsWith("Error", StringComparison.OrdinalIgnoreCase) ? MessageType.Error : MessageType.Info);
-            }
+            // var status = MeshConversionService.GetConversionStatus(gs);
+            // if (!string.IsNullOrEmpty(status))
+            // {
+            //     EditorGUILayout.HelpBox($"Mesh Conversion: {status}", status.StartsWith("Error", StringComparison.OrdinalIgnoreCase) ? MessageType.Error : MessageType.Info);
+            // }
 
-            // Mesh conversion parameters (local overrides)
-            GUILayout.Label("Mesh Conversion Settings", EditorStyles.boldLabel);
-            EditorGUI.indentLevel++;
-            m_convMinDetail = EditorGUILayout.Slider("Min Detail Size", m_convMinDetail, 0f, 1f);
-            m_convSimplify = EditorGUILayout.Slider("Simplify", m_convSimplify, 0f, 1f);
-            m_convAngleLimit = EditorGUILayout.IntSlider("Angle Limit", m_convAngleLimit, 0, 360);
-            m_convTextureSizeIdx = EditorGUILayout.Popup("Texture Size", m_convTextureSizeIdx,
-                System.Array.ConvertAll(m_convTextureSizes, s => s + "px"));
-            EditorGUI.indentLevel--;
-
-            if (GUILayout.Button("Convert to Mesh"))
-            {
-                // Apply overrides into settings for this conversion
-                var settings = GaussianSplattingPackageSettings.Instance;
-                settings.MinDetailSize = m_convMinDetail;
-                settings.Simplify = m_convSimplify;
-                settings.AngleLimit = m_convAngleLimit;
-                int tex = m_convTextureSizes[Mathf.Clamp(m_convTextureSizeIdx, 0, m_convTextureSizes.Length - 1)];
-                if (System.Enum.IsDefined(typeof(MeshConversionTextureSize), tex))
-                {
-                    settings.TextureSize = (MeshConversionTextureSize)tex;
-                }
-                MeshConversionService.ConvertGaussianSplatAsync(gs, m_ExportBakeTransform);
-            }
+            // // Mesh conversion parameters (local overrides)
+            // GUILayout.Label("Mesh Conversion Settings", EditorStyles.boldLabel);
+            // EditorGUI.indentLevel++;
+            // m_convMinDetail = EditorGUILayout.Slider("Min Detail Size", m_convMinDetail, 0f, 1f);
+            // m_convSimplify = EditorGUILayout.Slider("Simplify", m_convSimplify, 0f, 1f);
+            // m_convAngleLimit = EditorGUILayout.IntSlider("Angle Limit", m_convAngleLimit, 0, 360);
+            // m_convTextureSizeIdx = EditorGUILayout.Popup("Texture Size", m_convTextureSizeIdx,
+            //     System.Array.ConvertAll(m_convTextureSizes, s => s + "px"));
+            // EditorGUI.indentLevel--;
+            
+            // if (GUILayout.Button("Convert to Mesh"))
+            // {
+            //     // Apply overrides into settings for this conversion
+            //     var settings = GaussianSplattingPackageSettings.Instance;
+            //     settings.MinDetailSize = m_convMinDetail;
+            //     settings.Simplify = m_convSimplify;
+            //     settings.AngleLimit = m_convAngleLimit;
+            //     int tex = m_convTextureSizes[Mathf.Clamp(m_convTextureSizeIdx, 0, m_convTextureSizes.Length - 1)];
+            //     if (System.Enum.IsDefined(typeof(MeshConversionTextureSize), tex))
+            //     {
+            //         settings.TextureSize = (MeshConversionTextureSize)tex;
+            //     }
+            //     MeshConversionService.ConvertGaussianSplatAsync(gs, m_ExportBakeTransform);
+            // }
         }
 
 
