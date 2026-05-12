@@ -24,10 +24,8 @@ namespace GaussianSplatting.Editor
 
         private JobController()
         {
-            _gateway = new(
-                GaussianSplattingPackageSettings.Instance.GatewayApiUrl,
-                GaussianSplattingPackageSettings.Instance.GatewayApiKey
-            );
+            var settings = GaussianSplattingPackageSettings.Instance;
+            _gateway = new(settings.GatewayApiUrl, settings.GatewayApiKey);
         }
 
         public event Action OnJobsChanged;
@@ -89,7 +87,14 @@ namespace GaussianSplatting.Editor
                 OnJobsChanged?.Invoke();
                 
                 GatewayTask task;
-                if (job.ImagePrompt)                
+                if (job.GenMode == GenerationMode.Mesh)
+                {
+                    if (!job.ImagePrompt)
+                        throw new Exception("Mesh v2 requires an image prompt.");
+
+                    task = await CreateMeshV2Gateway().AddMeshV2TaskAsync(job.ImagePrompt);
+                }
+                else if (job.ImagePrompt)                
                     task = await _gateway.AddTaskAsync(job.ImagePrompt);
                 else
                     task = await _gateway.AddTaskAsync(job.TextPrompt);
@@ -99,6 +104,51 @@ namespace GaussianSplatting.Editor
 
                 while (!token.IsCancellationRequested)
                 {
+                    if (job.GenMode == GenerationMode.Mesh)
+                    {
+                        var meshV2Gateway = CreateMeshV2Gateway();
+                        var meshStatusResp = await meshV2Gateway.GetMeshV2StatusAsync(task);
+                        string meshStatus = meshStatusResp?.status;
+
+                        if (string.Equals(meshStatus, "Success", StringComparison.OrdinalIgnoreCase))
+                        {
+                            job.Status = JobStatus.Success;
+                            OnJobsChanged?.Invoke();
+
+                            var result = await meshV2Gateway.GetMeshV2ResultAsync(task);
+                            string modelsFolder = GaussianSplattingPackageSettings.Instance.GeneratedModelsPath;
+                            if (!Directory.Exists(modelsFolder))
+                                Directory.CreateDirectory(modelsFolder);
+
+                            string meshPath = Path.Combine(modelsFolder, $"{task.id}.glb");
+                            File.WriteAllBytes(meshPath, result);
+                            AssetDatabase.ImportAsset(meshPath);
+                            job.ResultPath = meshPath;
+
+                            var meshPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(meshPath);
+                            if (meshPrefab != null)
+                            {
+                                var instance = (GameObject)PrefabUtility.InstantiatePrefab(meshPrefab);
+                                instance.name = job.Name;
+                                Selection.activeObject = instance;
+                            }
+
+                            OnJobsChanged?.Invoke();
+                            break;
+                        }
+
+                        if (IsMeshV2FailureStatus(meshStatus))
+                        {
+                            job.Status = JobStatus.Failure;
+                            job.ErrorMessage = meshStatusResp?.message ?? meshStatusResp?.detail ?? meshStatus;
+                            OnJobsChanged?.Invoke();
+                            break;
+                        }
+
+                        await Task.Delay(2000, token);
+                        continue;
+                    }
+
                     var statusResp = await _gateway.GetStatusAsync(task);
 
                     if (statusResp.status == GatewayTaskStatus.Success)
@@ -115,36 +165,19 @@ namespace GaussianSplatting.Editor
 
                         string modelPath = Path.Combine(modelsFolder, $"{task.id}.ply");
                         File.WriteAllBytes(modelPath, plydata);
-                        
-                        if (job.GenMode == GenerationMode.Mesh)
-                        {
-                            string meshPath = await MeshConversionService.ConvertPlyToMeshAsync(plydata, task.id);
-                            job.ResultPath = meshPath;
 
-                            var meshPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(meshPath);
-                            if (meshPrefab != null)
-                            {
-                                var instance = (GameObject)PrefabUtility.InstantiatePrefab(meshPrefab);
-                                instance.name = job.Name;
-                                instance.transform.Rotate(new Vector3(-180f, 0f, 0f));
-                                Selection.activeObject = instance;
-                            }
-                        }
-                        else
-                        {
-                            job.ResultPath = modelPath;
-                            AssetDatabase.Refresh();
+                        job.ResultPath = modelPath;
+                        AssetDatabase.Refresh();
 
-                            GameObject newObject = new GameObject(job.Name);
-                            newObject.transform.localScale = new Vector3(1, 1, -1);       
-                            var renderer = newObject.AddComponent<GaussianSplatRenderer>();
+                        GameObject newObject = new GameObject(job.Name);
+                        newObject.transform.localScale = new Vector3(1, 1, -1);       
+                        var renderer = newObject.AddComponent<GaussianSplatRenderer>();
 
-                            newObject.SetActive(false);
-                            newObject.SetActive(true);
-                            var asset = _gsAssetCreator.CreateAsset(modelPath);
-                            renderer.m_Asset = asset;
-                            EditorUtility.SetDirty(asset);
-                        }
+                        newObject.SetActive(false);
+                        newObject.SetActive(true);
+                        var asset = _gsAssetCreator.CreateAsset(modelPath);
+                        renderer.m_Asset = asset;
+                        EditorUtility.SetDirty(asset);
                  
                         OnJobsChanged?.Invoke();
                         break;
@@ -177,6 +210,19 @@ namespace GaussianSplatting.Editor
             {
                 jobTokens.Remove(job.Id);
             }
+        }
+
+        private static bool IsMeshV2FailureStatus(string status)
+        {
+            return string.Equals(status, "Failed", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(status, "Failure", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(status, "Error", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static GatewayApi CreateMeshV2Gateway()
+        {
+            var settings = GaussianSplattingPackageSettings.Instance;
+            return new GatewayApi(settings.MeshV2ApiUrl, settings.MeshV2ApiKey);
         }
     }
 }

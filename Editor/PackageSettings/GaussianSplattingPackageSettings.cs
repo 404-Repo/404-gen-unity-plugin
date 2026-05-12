@@ -1,22 +1,19 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
-using System.ComponentModel;
 
 namespace GaussianSplatting.Editor
 {
-    public enum MeshConversionTextureSize
-    {
-        [Description("0.5K")] Size512 = 512,
-        [Description("1K")] Size1024 = 1024,
-        [Description("2K")] Size2048 = 2048,
-        [Description("4K")] Size4096 = 4096,
-        [Description("8K")] Size8192 = 8192
-    }
-
     public enum GenerationOption
     {
         GaussianSplat,
         MeshModel
+    }
+
+    public enum MeshV2Quality
+    {
+        Basic,
+        Standard,
+        Detailed
     }
 
     public class GaussianSplattingPackageSettings : ScriptableObject
@@ -30,19 +27,17 @@ namespace GaussianSplatting.Editor
         public bool DeleteAssociatedFilesWithPrompt = true;
 
         public bool UsePromptTimeout = true;
-        public int PromptTimeoutInSeconds = 90;
+        public int PromptTimeoutInSeconds = 300;
         public bool ConfirmDeletes = true;
 
         public GenerationOption GenerationOption = GenerationOption.GaussianSplat;
-        //todo: set default service url here
-        public string ConversionServiceUrl = "http://34.141.10.161/process";
-        public string GatewayApiUrl = "https://gateway-us-west.404.xyz/";
-        public string GatewayApiKey = "bf6714a5-10f4-42a7-9487-9620317e58cb";
-        public string ConvertedModelsPath = "Assets/GeneratedModels/Mesh";
-        public float MinDetailSize = 0.01f;
-        public float Simplify = 0f;
-        public int AngleLimit = 60;
-        public MeshConversionTextureSize TextureSize = MeshConversionTextureSize.Size2048;
+        public string GatewayApiUrl = "https://api.dns.404.xyz/";
+        public string GatewayApiKey = "6eca4068-3be6-4d30-b828-f63cda3bc35b";
+        public string MeshV2ApiUrl = "https://api-eu.404.xyz";
+        public string MeshV2ApiKey = "6eca4068-3be6-4d30-b828-f63cda3bc35b";
+        public MeshV2Quality MeshV2GeometryQuality = MeshV2Quality.Detailed;
+        public MeshV2Quality MeshV2TextureQuality = MeshV2Quality.Detailed;
+        public int MeshV2FaceCount = 500000;
         public List<string> ImportedMeshPaths = new List<string>();
         
         //singleton
@@ -61,14 +56,6 @@ namespace GaussianSplatting.Editor
 
                 return _instance;
             }
-        }
-
-        public void SetDefaultConversionParameters()
-        {
-            MinDetailSize = 0.01f;
-            Simplify = 0f;
-            AngleLimit = 60;
-            TextureSize = MeshConversionTextureSize.Size2048;
         }
 
         public void SetImportedMeshPath(string meshPath)

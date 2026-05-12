@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -72,7 +72,7 @@ namespace GaussianSplatting.Editor
 
                     settings.UsePromptTimeout = EditorGUILayout.BeginToggleGroup("Auto-cancel Prompts that Timeout", settings.UsePromptTimeout);
                     EditorGUILayout.BeginHorizontal();
-                    settings.PromptTimeoutInSeconds = EditorGUILayout.IntSlider("Timeout threshold", settings.PromptTimeoutInSeconds, 30, 120, GUILayout.MaxWidth(600));
+                    settings.PromptTimeoutInSeconds = EditorGUILayout.IntSlider("Timeout threshold", settings.PromptTimeoutInSeconds, 30, 600, GUILayout.MaxWidth(600));
                     EditorGUILayout.LabelField("sec");
                     EditorGUILayout.EndHorizontal();
                     EditorGUILayout.EndToggleGroup();
@@ -91,13 +91,15 @@ namespace GaussianSplatting.Editor
                     EditorGUI.indentLevel--;
                     EditorGUILayout.Space();
 
-                    EditorGUILayout.SelectableLabel("Mesh Conversion ", EditorStyles.boldLabel);
+                    EditorGUILayout.SelectableLabel("Mesh v2 Settings", EditorStyles.boldLabel);
                     
                     EditorGUI.indentLevel++;
-                    EditorGUILayout.LabelField("Mesh Conversion service URL", EditorStyles.boldLabel);
-                    GaussianSplattingPackageSettings.Instance.ConversionServiceUrl = EditorGUILayout.TextField(GaussianSplattingPackageSettings.Instance.ConversionServiceUrl);
+                    EditorGUILayout.LabelField("Mesh v2 API URL", EditorStyles.boldLabel);
+                    settings.MeshV2ApiUrl = EditorGUILayout.TextField(settings.MeshV2ApiUrl);
+
+                    EditorGUILayout.LabelField("Mesh v2 API Key", EditorStyles.boldLabel);
+                    settings.MeshV2ApiKey = EditorGUILayout.TextField(settings.MeshV2ApiKey);
                     EditorGUILayout.Space();
-                    // MeshConversionUtility.DrawMeshConversionOptions(); // Removed because MeshConversionUtility is being removed
                     EditorGUI.indentLevel--;
                     EditorGUI.indentLevel--;
                     if (GUI.changed)

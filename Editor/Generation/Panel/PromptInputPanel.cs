@@ -13,19 +13,12 @@ namespace GaussianSplatting.Editor
 
         private bool isExpanded = true;
 
-        private const float DefaultMinDetailSize = 0.1f;
-        private const float DefaultSimplify = 0.0f;
-        private const float DefaultAngleLimit = 60f;
-        private const int DefaultTextureSizeIndex = 2; // 2048
+        private const int DefaultFaceCount = 500000;
 
         // User values
-        private float minDetailSize = DefaultMinDetailSize;
-        private float simplify = DefaultSimplify;
-        private float angleLimit = DefaultAngleLimit;
-        private int textureSizeIndex = DefaultTextureSizeIndex;
-
-        // Dropdown options
-        private readonly int[] textureSizes = { 512, 1024, 2048, 4096, 8192 };
+        private MeshV2Quality geometryQuality = MeshV2Quality.Detailed;
+        private MeshV2Quality textureQuality = MeshV2Quality.Detailed;
+        private int faceCount = DefaultFaceCount;
 
         public PromptInputPanel(Action<string> onTextChanged, Action<Texture2D, string> onImageSelected, Action onSubmit, Action<GenerationMode> onModeChanged)
         {
@@ -38,15 +31,9 @@ namespace GaussianSplatting.Editor
             public void ApplyMeshSettingsToSettings()
             {
                 var settings = GaussianSplattingPackageSettings.Instance;
-                settings.MinDetailSize = minDetailSize;
-                settings.Simplify = simplify;
-                settings.AngleLimit = Mathf.RoundToInt(angleLimit);
-                int tex = textureSizes[Mathf.Clamp(textureSizeIndex, 0, textureSizes.Length - 1)];
-                // Map int value to enum by underlying value
-                if (System.Enum.IsDefined(typeof(MeshConversionTextureSize), tex))
-                {
-                    settings.TextureSize = (MeshConversionTextureSize)tex;
-                }
+                settings.MeshV2GeometryQuality = geometryQuality;
+                settings.MeshV2TextureQuality = textureQuality;
+                settings.MeshV2FaceCount = Mathf.Clamp(faceCount, 20000, 2000000);
             }
         public void Draw(string textPrompt, Texture2D selectedImage, GenerationMode currentMode)
         {
@@ -60,9 +47,12 @@ namespace GaussianSplatting.Editor
             EditorGUILayout.BeginHorizontal();
 
             EditorGUI.BeginChangeCheck();
-            string newText = GUILayout.TextField(textPrompt, GUILayout.MinWidth(150));
-            if (EditorGUI.EndChangeCheck())
-                onTextChanged?.Invoke(newText);
+            using (new EditorGUI.DisabledScope(currentMode == GenerationMode.Mesh))
+            {
+                string newText = GUILayout.TextField(textPrompt, GUILayout.MinWidth(150));
+                if (EditorGUI.EndChangeCheck())
+                    onTextChanged?.Invoke(newText);
+            }
 
             if (GUILayout.Button("Image", GUILayout.Width(60)))
             {
@@ -112,29 +102,28 @@ namespace GaussianSplatting.Editor
 
             if (newMode == GenerationMode.Mesh)
             {
+                if (selectedImage == null)
+                {
+                    EditorGUILayout.HelpBox("Mesh v2 requires an image input. Text-only mesh generation is not supported.", MessageType.Info);
+                }
+
                 EditorGUI.indentLevel++;
-                minDetailSize = EditorGUILayout.Slider("Min Detail Size", minDetailSize, 0f, 1f);
-                simplify = EditorGUILayout.Slider("Simplify", simplify, 0f, 1f);
-                angleLimit = EditorGUILayout.Slider("Angle Limit", angleLimit, 0f, 360f);
-                textureSizeIndex = EditorGUILayout.Popup(
-                    "Texture Size",
-                    textureSizeIndex,
-                    Array.ConvertAll(textureSizes, s => s + "px")
-                );
+                geometryQuality = (MeshV2Quality)EditorGUILayout.EnumPopup("Geometry Quality", geometryQuality);
+                textureQuality = (MeshV2Quality)EditorGUILayout.EnumPopup("Texture Quality", textureQuality);
+                faceCount = EditorGUILayout.IntSlider("Face Count", faceCount, 20000, 2000000);
                 GUILayout.Space(4);
                 if (GUILayout.Button("Reset to Defaults"))
                 {
-                    minDetailSize = DefaultMinDetailSize;
-                    simplify = DefaultSimplify;
-                    angleLimit = DefaultAngleLimit;
-                    textureSizeIndex = DefaultTextureSizeIndex;
+                    geometryQuality = MeshV2Quality.Detailed;
+                    textureQuality = MeshV2Quality.Detailed;
+                    faceCount = DefaultFaceCount;
                 }
                 EditorGUI.indentLevel--;
             }
 
             // Generate Button
             GUILayout.Space(8);
-            GUI.enabled = textPrompt != "" || selectedImage != null;
+            GUI.enabled = currentMode == GenerationMode.Mesh ? selectedImage != null : textPrompt != "" || selectedImage != null;
             if (GUILayout.Button("Generate"))
                 onSubmit?.Invoke();
             GUI.enabled = true;

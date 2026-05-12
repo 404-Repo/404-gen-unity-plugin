@@ -5,8 +5,10 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace GaussianSplatting.Editor
 {
@@ -25,6 +27,7 @@ namespace GaussianSplatting.Editor
     public enum GatewayTaskStatus
     {
         NoResult,
+        InProgress,
         Failure,
         PartialResult,
         Success
@@ -35,6 +38,14 @@ namespace GaussianSplatting.Editor
     {
         public GatewayTaskStatus status;
         public string reason;
+    }
+
+    [Serializable]
+    public class MeshV2TaskStatusResponse
+    {
+        public string status;
+        public string message;
+        public string detail;
     }
 
     [Serializable]
@@ -139,6 +150,57 @@ public class GatewayTask
             }    
         }
 
+        public async Task<GatewayTask> AddMeshV2TaskAsync(Texture2D imagePrompt)
+        {
+            try
+            {
+                if (imagePrompt == null)
+                    throw new ArgumentNullException(nameof(imagePrompt), "Mesh v2 requires an image prompt.");
+
+                string url = ConstructUrl(_gatewayUrl, GatewayRoutes.AddTask);
+                byte[] imageBytes = EncodeMeshV2Jpeg(imagePrompt);
+                if (imageBytes == null || imageBytes.Length == 0)
+                    throw new Exception("Failed to encode image to JPEG.");
+                if (imageBytes.Length > 6 * 1024 * 1024)
+                    throw new Exception($"Mesh v2 image upload is {imageBytes.Length} bytes, exceeding the 6 MB upload limit.");
+
+                var settings = GaussianSplattingPackageSettings.Instance;
+                var modelParams = new
+                {
+                    pipeline_type = GetMeshV2PipelineType(settings.MeshV2GeometryQuality),
+                    texture_size = GetMeshV2TextureSize(settings.MeshV2TextureQuality),
+                    face_count = Mathf.Clamp(settings.MeshV2FaceCount, 20000, 2000000)
+                };
+
+                string modelParamsJson = JsonConvert.SerializeObject(modelParams);
+                string boundary = "----UnityMeshV2Boundary" + Guid.NewGuid().ToString("N");
+                byte[] multipartBody = BuildMeshV2MultipartBody(boundary, imageBytes, modelParamsJson);
+
+                using UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST);
+                request.uploadHandler = new UploadHandlerRaw(multipartBody);
+                request.downloadHandler = new DownloadHandlerBuffer();
+                request.SetRequestHeader("Content-Type", $"multipart/form-data; boundary={boundary}");
+                request.SetRequestHeader("x-api-key", _gatewayApiKey);
+                request.timeout = settings.UsePromptTimeout ? Mathf.Max(0, settings.PromptTimeoutInSeconds) : 0;
+
+                var operation = request.SendWebRequest();
+                while (!operation.isDone)
+                    await Task.Yield();
+
+                string body = request.downloadHandler?.text;
+                EnsureMeshV2Success(request, body);
+                var task = JsonConvert.DeserializeObject<GatewayTask>(body);
+                if (task == null || string.IsNullOrWhiteSpace(task.id))
+                    throw new Exception($"Mesh v2: no task ID in response: {body}");
+
+                return task;
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Mesh v2: error adding task: {e.Message}", e);
+            }
+        }
+
 
         public async Task<GatewayTaskStatusResponse> GetStatusAsync(GatewayTask task)
         {
@@ -180,6 +242,50 @@ public class GatewayTask
             }
         }
 
+        public async Task<MeshV2TaskStatusResponse> GetMeshV2StatusAsync(GatewayTask task)
+        {
+            try
+            {
+                string url = ConstructUrl(_gatewayUrl, GatewayRoutes.GetStatus, ("id", task.id));
+
+                HttpResponseMessage response = await _client.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                string body = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<MeshV2TaskStatusResponse>(body);
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Mesh v2: error getting status: {e.Message}", e);
+            }
+        }
+
+        public async Task<byte[]> GetMeshV2ResultAsync(GatewayTask task)
+        {
+            try
+            {
+                string url = ConstructUrl(_gatewayUrl, GatewayRoutes.GetResult, ("id", task.id));
+
+                HttpResponseMessage response = await _client.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                byte[] body = await response.Content.ReadAsByteArrayAsync();
+                if (body.Length < 4 || body[0] != (byte)'g' || body[1] != (byte)'l' || body[2] != (byte)'T' || body[3] != (byte)'F')
+                {
+                    string header = body.Length >= 4
+                        ? $"{body[0]:X2} {body[1]:X2} {body[2]:X2} {body[3]:X2}"
+                        : "<too short>";
+                    throw new Exception($"Mesh v2: expected GLB (glTF header) but got {header}.");
+                }
+
+                return body;
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Mesh v2: error getting result: {e.Message}", e);
+            }
+        }
+
         private static string ConstructUrl(string host, string route, params (string, string)[] query)
         {
             // Ensure host ends with "/" and route does not start with "/"
@@ -202,6 +308,119 @@ public class GatewayTask
             };
 
             return builder.ToString();
+        }
+
+        private static string GetMeshV2PipelineType(MeshV2Quality quality)
+        {
+            return quality switch
+            {
+                MeshV2Quality.Basic => "1024",
+                MeshV2Quality.Standard => "1024_cascade",
+                _ => "1536_cascade"
+            };
+        }
+
+        private static int GetMeshV2TextureSize(MeshV2Quality quality)
+        {
+            return quality switch
+            {
+                MeshV2Quality.Basic => 1024,
+                MeshV2Quality.Standard => 2048,
+                _ => 4096
+            };
+        }
+
+        private static void EnsureMeshV2Success(HttpResponseMessage response, string body)
+        {
+            if (response.IsSuccessStatusCode)
+                return;
+
+            string retryAfter = response.Headers.RetryAfter?.ToString();
+            string bodyPreview = string.IsNullOrWhiteSpace(body)
+                ? "<empty>"
+                : body.Substring(0, Math.Min(body.Length, 1000));
+
+            throw new HttpRequestException(
+                $"Mesh v2 HTTP {(int)response.StatusCode} ({response.ReasonPhrase}). " +
+                $"Retry-After: {retryAfter ?? "<none>"}. Body: {bodyPreview}");
+        }
+
+        private static void EnsureMeshV2Success(UnityWebRequest request, string body)
+        {
+            if (request.result == UnityWebRequest.Result.Success)
+                return;
+
+            string retryAfter = request.GetResponseHeader("Retry-After");
+            string bodyPreview = string.IsNullOrWhiteSpace(body)
+                ? "<empty>"
+                : body.Substring(0, Math.Min(body.Length, 1000));
+
+            throw new HttpRequestException(
+                $"Mesh v2 HTTP {request.responseCode} ({request.error}). " +
+                $"Retry-After: {retryAfter ?? "<none>"}. Body: {bodyPreview}");
+        }
+
+        private static byte[] BuildMeshV2MultipartBody(string boundary, byte[] imageBytes, string modelParamsJson)
+        {
+            var body = new List<byte>();
+
+            AddMultipartField(body, boundary, "model", "404-mesh-v2");
+            AddMultipartField(body, boundary, "model_params", modelParamsJson, "application/json");
+            AddMultipartField(body, boundary, "seed", "42");
+            AddMultipartFile(body, boundary, "image", "image.jpg", "image/jpeg", imageBytes);
+            AddAscii(body, $"--{boundary}--\r\n");
+
+            return body.ToArray();
+        }
+
+        private static void AddMultipartField(List<byte> body, string boundary, string name, string value, string contentType = null)
+        {
+            AddAscii(body, $"--{boundary}\r\n");
+            AddAscii(body, $"Content-Disposition: form-data; name=\"{name}\"\r\n");
+            if (!string.IsNullOrWhiteSpace(contentType))
+                AddAscii(body, $"Content-Type: {contentType}\r\n");
+            AddAscii(body, "\r\n");
+            AddUtf8(body, value);
+            AddAscii(body, "\r\n");
+        }
+
+        private static void AddMultipartFile(List<byte> body, string boundary, string name, string fileName, string contentType, byte[] fileBytes)
+        {
+            AddAscii(body, $"--{boundary}\r\n");
+            AddAscii(body, $"Content-Disposition: form-data; name=\"{name}\"; filename=\"{fileName}\"\r\n");
+            AddAscii(body, $"Content-Type: {contentType}\r\n");
+            AddAscii(body, "\r\n");
+            body.AddRange(fileBytes);
+            AddAscii(body, "\r\n");
+        }
+
+        private static void AddAscii(List<byte> body, string value)
+        {
+            body.AddRange(Encoding.ASCII.GetBytes(value));
+        }
+
+        private static void AddUtf8(List<byte> body, string value)
+        {
+            body.AddRange(Encoding.UTF8.GetBytes(value));
+        }
+
+        private byte[] EncodeMeshV2Jpeg(Texture2D source)
+        {
+            const int maxDimension = 2048;
+            Texture2D processedTexture = source;
+            bool createdTempTexture = false;
+
+            if (source.width > maxDimension || source.height > maxDimension)
+            {
+                processedTexture = ResizeTexture(source, maxDimension, maxDimension);
+                createdTempTexture = true;
+            }
+
+            byte[] imageBytes = processedTexture.EncodeToJPG(90);
+            if (createdTempTexture)
+                UnityEngine.Object.DestroyImmediate(processedTexture);
+
+            return imageBytes;
         }
 
         private Texture2D ResizeTexture(Texture2D source, int maxWidth, int maxHeight)

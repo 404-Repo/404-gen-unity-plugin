@@ -1,21 +1,10 @@
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 using System.IO;
 using System.Text;
-using System.Globalization;
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
 
 using UnityEngine;
-using UnityEngine.Networking;
-using UnityEditor;
-using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using Unity.Mathematics;
 using UnityEngine.Rendering;
-using Object = UnityEngine.Object;
 
 using GaussianSplatting.Runtime;
 
@@ -24,60 +13,7 @@ namespace GaussianSplatting.Editor
 {
     public static class MeshConversionService
     {
-        private static readonly Dictionary<int, string> _statusByRendererId = new Dictionary<int, string>();
-
-        public static void SetConversionStatus(GaussianSplatRenderer renderer, string status)
-        {
-            if (!renderer) return;
-            _statusByRendererId[renderer.GetInstanceID()] = status;
-            if (GaussianSplattingPackageSettings.Instance.LogToConsole)
-            {
-                Debug.Log($"[Mesh Conversion] {renderer.name}: {status}");
-            }
-        }
-
-        public static string GetConversionStatus(GaussianSplatRenderer renderer)
-        {
-            if (!renderer) return null;
-            return _statusByRendererId.TryGetValue(renderer.GetInstanceID(), out var s) ? s : null;
-        }
-
-        private static async Task<byte[]> SendBytesToServerAsync(byte[] inputData, string fileName)
-        {
-            var form = new WWWForm();
-            form.AddBinaryData("file", inputData, fileName, "application/octet-stream");
-
-            var settings = GaussianSplattingPackageSettings.Instance;
-
-            var minDetail = settings.MinDetailSize.ToString(CultureInfo.InvariantCulture);
-            form.AddField("min_detail", minDetail);
-            var simplify = settings.Simplify.ToString(CultureInfo.InvariantCulture);
-            form.AddField("simplify", simplify);
-            var angleLimit = (settings.AngleLimit * Mathf.Deg2Rad).ToString(CultureInfo.InvariantCulture);
-            form.AddField("angle_limit", angleLimit);
-            var textureSize = ((int)settings.TextureSize).ToString();
-            form.AddField("texture_size", textureSize);
-            if (GaussianSplattingPackageSettings.Instance.LogToConsole)
-            {
-                Debug.Log(
-                    $"Sending mesh conversion params min_detail:{minDetail}, simplify:{simplify}, angle_limit:{angleLimit}, texture_size:{textureSize}");
-            }
-
-            using UnityWebRequest www = UnityWebRequest.Post(settings.ConversionServiceUrl, form);
-            var operation = www.SendWebRequest();
-
-            while (!operation.isDone)
-                await Task.Yield();
-
-            if (www.result != UnityWebRequest.Result.Success)
-            {
-                throw new Exception("Upload failed: " + www.error);
-            }
-            
-            return www.downloadHandler.data;
-        }
-
-         public static unsafe void ExportPlyFile(GaussianSplatRenderer gs, bool bakeTransform, string path)
+        public static unsafe void ExportPlyFile(GaussianSplatRenderer gs, bool bakeTransform, string path)
         {
             // Ensure directory exists for the target path
             var targetDir = Path.GetDirectoryName(path);
@@ -133,136 +69,6 @@ namespace GaussianSplatting.Editor
             if (GaussianSplattingPackageSettings.Instance.LogToConsole)
             {
                 Debug.Log($"Exported PLY {path} with {aliveCount:N0} splats");
-            }
-        }
-
-        public static async Task<string> ConvertPlyToMeshAsync(byte[] plyData, string modelName)
-        {
-            var folderPath = GaussianSplattingPackageSettings.Instance.ConvertedModelsPath;
-            
-            if (!Directory.Exists(folderPath))
-                Directory.CreateDirectory(folderPath);
-
-            var modelFolderPath = Path.Combine(folderPath, modelName);
-            if (!Directory.Exists(modelFolderPath))
-                Directory.CreateDirectory(modelFolderPath);
-
-            var plyFileName = $"{modelName}.ply";
-            var meshFileName = $"{modelName}.fbx";
-            var meshPath = Path.Combine(modelFolderPath, meshFileName).Replace("\\", "/");
-
-            byte[] meshData = await SendBytesToServerAsync(plyData, plyFileName);
-            
-            File.WriteAllBytes(meshPath, meshData);
-            AssetDatabase.ImportAsset(meshPath);
-
-            ModelImporter importer = AssetImporter.GetAtPath(meshPath) as ModelImporter;
-            if (importer != null)
-            {
-                importer.materialImportMode = ModelImporterMaterialImportMode.ImportViaMaterialDescription;
-                importer.materialLocation = ModelImporterMaterialLocation.External;
-                importer.materialName = ModelImporterMaterialName.BasedOnModelNameAndMaterialName;
-                importer.materialSearch = ModelImporterMaterialSearch.Local;
-                importer.bakeAxisConversion = true;
-                
-                var textureFolderPath = Path.GetDirectoryName(meshPath);
-                importer.ExtractTextures(textureFolderPath);
-                
-                importer.SaveAndReimport();
-            }
-
-            AssetDatabase.Refresh();
-            return meshPath;
-        }
-
-        public static async void ConvertGaussianSplatAsync(GaussianSplatRenderer gaussianSplatRenderer, bool exportInWorldSpace)
-        {
-            SetConversionStatus(gaussianSplatRenderer, "Mesh conversion started");
-            var modelName = gaussianSplatRenderer.asset.name;
-            var folderPath = GaussianSplattingPackageSettings.Instance.ConvertedModelsPath;
-            var modelFolderPath = Path.Combine(folderPath, modelName);
-
-            // Ensure the base folder exists under Assets (create intermediate folders if needed)
-            if (!AssetDatabase.IsValidFolder(folderPath))
-                GaussianSplatting.FolderUtility.CreateFolderPath(folderPath);
-            // Ensure the model subfolder exists
-            if (!AssetDatabase.IsValidFolder(modelFolderPath))
-                GaussianSplatting.FolderUtility.CreateFolderPath(modelFolderPath);
-            
-            var plyFileName = $"{modelName}.ply";
-            var meshFileName = $"{modelName}.fbx";
-            
-            //"Assets/Export/skater.ply"
-            var plyPath = Path.Combine(folderPath, $"{modelName}/{plyFileName}")
-                .Replace("\\", "/");
-            
-            //"Assets/Export/skater.fbx"
-            var meshPath = Path.Combine(folderPath, $"{modelName}/{meshFileName}")
-                .Replace("\\", "/");
-
-            // GaussianSplattingPackageSettings.Instance.SetImportedMeshPath(meshPath);
-            
-            SetConversionStatus(gaussianSplatRenderer, "Exporting PLY");
-            ExportPlyFile(gaussianSplatRenderer, exportInWorldSpace, plyPath);
-            
-            await Task.Yield();
-            
-            SetConversionStatus(gaussianSplatRenderer, "Importing PLY into project");
-            AssetDatabase.ImportAsset(plyPath);
-            var ply = AssetDatabase.LoadAssetAtPath<Object>(plyPath);
-            var plyData = File.ReadAllBytes(plyPath);
-            
-            SetConversionStatus(gaussianSplatRenderer, "Uploading to conversion service...");
-            
-            try 
-            {
-                byte[] meshData = await SendBytesToServerAsync(plyData, plyFileName);
-                
-                SetConversionStatus(gaussianSplatRenderer, "Downloading mesh and importing assets");
-                File.WriteAllBytes(meshPath, meshData);
-                AssetDatabase.ImportAsset(meshPath);
-
-                // Fix: Configure ModelImporter to ensure materials and textures are imported correctly
-                // This prevents Unity from remapping to existing materials in the project
-                ModelImporter importer = AssetImporter.GetAtPath(meshPath) as ModelImporter;
-                if (importer != null)
-                {
-                    importer.materialImportMode = ModelImporterMaterialImportMode.ImportViaMaterialDescription;
-                    importer.materialLocation = ModelImporterMaterialLocation.External;
-                    importer.materialName = ModelImporterMaterialName.BasedOnModelNameAndMaterialName;
-                    importer.materialSearch = ModelImporterMaterialSearch.Local;
-                    importer.bakeAxisConversion = true;
-                    
-                    var textureFolderPath = Path.GetDirectoryName(meshPath);
-                    importer.ExtractTextures(textureFolderPath);
-                    
-                    importer.SaveAndReimport();
-                }
-
-                AssetDatabase.Refresh();
-                var mesh = AssetDatabase.LoadAssetAtPath<Object>(meshPath);
-                SetConversionStatus(gaussianSplatRenderer, "Conversion complete");
-
-                var meshRoot = new GameObject(gaussianSplatRenderer.name);
-                var gsTransform = gaussianSplatRenderer.transform;
-                meshRoot.transform.position = gsTransform.position;
-                meshRoot.transform.rotation = gsTransform.rotation;
-                
-                var instance = Object.Instantiate(mesh, meshRoot.transform, false) as GameObject;
-                if (instance != null)
-                {
-                    instance.name = "Mesh";
-                    instance.transform.Rotate(new Vector3(-180f,0f,0f));
-                    //parents Gaussian splat and disables it
-                    gaussianSplatRenderer.transform.SetParent(meshRoot.transform);
-                    gaussianSplatRenderer.gameObject.SetActive(false);
-                    gaussianSplatRenderer.name = "Gaussian splat";
-                }
-            }
-            catch (Exception ex)
-            {
-                SetConversionStatus(gaussianSplatRenderer, $"Error: {ex.Message}");
-                Debug.LogError(ex.Message);
             }
         }
     }
