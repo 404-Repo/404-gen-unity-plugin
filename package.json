@@ -1,15 +1,15 @@
 {
     "author": "Ruben Hohndorf",
     "dependencies": { "com.unity.burst": "1.8.18", "com.unity.cloud.gltfast": "6.16.0", "com.unity.collections": "2.1.4", "com.unity.mathematics": "1.2.6", "com.unity.nuget.newtonsoft-json": "3.0.2", "com.unity.editorcoroutines": "1.0.0"},
-    "description": "Generate, render and edit 3D Gaussian Splats",
+    "description": "Generate, render and edit 3D Gaussian Splats and Mesh GLB models",
     "displayName": "404-GEN 3D Generator",
-    "keywords": [ "unity" ],
+    "keywords": [ "unity", "404-gen", "generative ai", "3d", "gaussian splat", "mesh", "glb" ],
     "license": "MIT",
     "name": "xyz.404.404-gen-unity-plugin",
     "repository": "github:404-Repo/404-gen-unity-plugin",
     "unity": "2022.3",
     "unityRelease": "7f1",
-    "version": "0.6.0",
+    "version": "0.7.0",
     "samples": [
         {
             "displayName": "HDRP samples",
